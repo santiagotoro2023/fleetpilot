@@ -1,0 +1,101 @@
+## Installation
+
+Three ways, all with the same app:
+
+@@IF static@@
+- **Debian 12 or 13**: the installer script below (nginx, HTTPS, Let's Encrypt included).
+@@END@@
+@@IF server@@
+- **Debian 12 or 13**: the installer script below (nginx, HTTPS, Let's Encrypt, PostgreSQL and backups included).
+@@END@@
+- **Docker / Docker Compose**: `docker compose up -d` in this repository, or `docker run -p 8080:8080 ghcr.io/@@APP_OWNER_LC@@/@@APP_ID@@:latest`.
+- **Kubernetes**: a Helm chart (`helm install @@APP_ID@@ oci://ghcr.io/@@APP_OWNER_LC@@/charts/@@APP_ID@@ -n @@APP_ID@@ --create-namespace`) or a single manifest, ready for a small cluster with three nodes.
+
+@@IF static@@
+Docker, Compose, Kubernetes, Helm and moving users between servers are explained step by step in **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+@@END@@
+@@IF server@@
+Docker, Compose, Kubernetes, Helm, the database and backups are explained step by step in **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+@@END@@
+
+### Debian installer
+
+On Debian 12 or 13, as root or with sudo:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/@@APP_REPO@@/main/@@APP_ID@@-install.sh
+sudo bash @@APP_ID@@-install.sh
+```
+
+@@APP_NAME@@ then runs at `https://<server>:@@APP_PORT@@/`, secured with a self-signed certificate that the installer generates automatically. Your browser warns once because no public authority signed it; the installer prints the certificate's SHA-256 fingerprint so you can compare it before accepting. Plain `http://` requests to the port are sent on to HTTPS. If you'd rather have a certificate that browsers trust right away, see [Let's Encrypt](#lets-encrypt) below.
+
+| Command | Effect |
+|---|---|
+| `sudo bash @@APP_ID@@-install.sh` | installs or updates (HTTPS on port @@APP_PORT@@) |
+| `sudo bash @@APP_ID@@-install.sh --port 443` | different port. With 80, the nginx default site is disabled |
+| `sudo bash @@APP_ID@@-install.sh --http` | plain HTTP without a certificate (kept on later updates, back with `--https`) |
+| `sudo bash @@APP_ID@@-install.sh --new-cert` | generates new certificates |
+| `--letsencrypt <domain> --dns <provider>` | trusted certificate from Let's Encrypt, see below |
+| `--no-letsencrypt` | back to the self-signed certificate only |
+| `sudo bash @@APP_ID@@-install.sh --update` | fetches the latest version from GitHub |
+@@IF static@@
+| `sudo bash @@APP_ID@@-install.sh --uninstall` | removes @@APP_NAME@@, nginx stays |
+| `bash @@APP_ID@@-install.sh --extract ./web` | only extracts the web files, no root needed |
+@@END@@
+@@IF server@@
+| `sudo bash @@APP_ID@@-install.sh --uninstall` | removes @@APP_NAME@@, keeps the database and the backups |
+| `--uninstall --purge` | removes @@APP_NAME@@ with its database and backups |
+| `--backup` | backs up the database now (also automatic: daily and before every update) |
+| `--restore <file>` | restores a backup (backs up the current state first) |
+| `--list-backups` | lists the backups in `/var/backups/@@APP_ID@@` |
+| `--database-url postgres://…` | uses an existing PostgreSQL server instead of a local one (back with `--local-database`) |
+| `--no-auto-backup` | no daily backup (back with `--auto-backup`) |
+@@END@@
+| `--force` | also installs on untested systems |
+| `--no-move-card` | never show the card "@@APP_NAME@@ has a new address" (e.g. behind a reverse proxy or when people use the IP on purpose), back with `--move-card` |
+| `--moved-to https://new.example.com` | @@APP_NAME@@ moved elsewhere (e.g. to Kubernetes): every user gets a one-click move of their browser data (`--not-moved` removes it) |
+
+@@IF static@@
+The script installs nginx (and openssl, if missing) from the Debian packages, writes the files to `/opt/@@APP_ID@@/www` and creates `/etc/nginx/sites-available/@@APP_ID@@`.
+@@END@@
+@@IF server@@
+The script installs nginx, Node.js and PostgreSQL (and openssl, if missing) from the Debian packages. It writes the web app to `/opt/@@APP_ID@@/www` and the app server to `/opt/@@APP_ID@@/app`, creates the database `@@APP_ID@@` with its own user, runs the app server as the systemd service `@@APP_ID@@` (as the system user `@@APP_ID@@`, sandboxed, listening only on 127.0.0.1) and creates `/etc/nginx/sites-available/@@APP_ID@@`, which passes the requests to it.
+@@END@@
+The certificate and key live in `/opt/@@APP_ID@@/tls/`. The certificate covers the hostname, `localhost` and all IP addresses of the server and is valid for 825 days. Updates keep it, so browsers don't warn again; it is only replaced when it expires within 30 days or with `--new-cert`. To use your own certificate, replace `@@APP_ID@@.crt` and `@@APP_ID@@.key` there and run `systemctl reload nginx`. If `ufw` is active, the port is opened. At runtime @@APP_NAME@@ loads nothing from the internet, so it also works in isolated networks.
+
+All settings (port, HTTP or HTTPS, Let's Encrypt, the address options) are saved in `/opt/@@APP_ID@@/@@APP_ID@@.conf`, and updates keep them. A copy of the installer is kept at `/opt/@@APP_ID@@/@@APP_ID@@-install.sh`.
+
+### Let's Encrypt
+
+If the server has a domain name, it can get a certificate from Let's Encrypt. The domain is verified with a DNS TXT record, so port 80 doesn't need to be open and the server can sit in a private network, as long as the name points to it in DNS. This works for new installs and existing ones (download the current script as shown above, then run it with the new options):
+
+```bash
+# With the API of your DNS provider (here Cloudflare), renews itself
+sudo CF_Token=xxxxx CF_Zone_ID=xxxxx bash @@APP_ID@@-install.sh --letsencrypt @@APP_ID@@.example.com --dns dns_cf
+
+# Without an API: the script shows the TXT record, you create it by hand and press Enter
+sudo bash @@APP_ID@@-install.sh --letsencrypt @@APP_ID@@.example.com --dns manual
+```
+
+`--dns` takes the name of any DNS provider that [acme.sh supports](https://github.com/acmesh-official/acme.sh/wiki/dnsapi) (`dns_cf`, `dns_hetzner`, `dns_ionos`, `dns_aws`, `dns_gd`, …). The wiki page lists the environment variables each provider needs. Pass them once, after `sudo` as shown, and acme.sh keeps them for renewals. `--email you@example.com` is optional. The installer fetches acme.sh 3.1.6 from a fixed commit, checks its checksum and keeps it in `/opt/@@APP_ID@@/acme`. A daily systemd timer (`@@APP_ID@@-renew.timer`) renews the certificate 30 days before it expires and reloads nginx. With `--dns manual` there is no automatic renewal: within the last 30 days, run the installer again and create the new TXT record.
+
+The self-signed certificate keeps serving access by IP address. When someone opens @@APP_NAME@@ by IP, a small card offers to move their browser data to the domain. If you don't want that card (for example because the server sits behind a reverse proxy and the address in the card would be wrong), add `--no-move-card`.
+
+@@IF static@@
+### Your data is safe
+
+Each browser stores everything a user does in @@APP_NAME@@ locally. The server never sees it, and updates don't touch it. Browsers keep this data per address, so @@APP_NAME@@ carries it along when the address changes:
+
+- **HTTP to HTTPS**: opening the old `http://` address shows a short page that hands the data saved there to the `https://` address (once, then it just forwards).
+- **IP address to domain**: after setting up Let's Encrypt, a card offers to move the data to the domain with one click.
+- Merging never overwrites anything: what was done on either side stays done.
+- **Another server** (e.g. moving to Docker or Kubernetes): with the same address nothing changes for the users. With a new address, run the old installer with `--moved-to <new address>`, and everyone can move their data with one click. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#moving-users-and-their-data).
+- **Backup file**: on the home page, "Download backup" saves everything as one file and "Restore backup" brings it back anywhere. Restoring merges and never loses anything.
+@@END@@
+@@IF server@@
+### Your data is safe
+
+All data lives in the PostgreSQL database `@@APP_ID@@`. The installer backs it up every day and before every update (`/var/backups/@@APP_ID@@`, the last 14 are kept); `--backup` makes one at any time and `--restore <file>` brings one back, after backing up the current state. Updates never delete data: the app server adds to the database schema, it never removes from it. `--uninstall` keeps database and backups, only `--uninstall --purge` deletes them. Backups are standard `pg_dump` files that every deployment (Compose, Kubernetes) can restore, which is also how @@APP_NAME@@ moves to another server, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#backups).
+
+Settings of each browser (theme, panel sizes) stay in the browser, per address; the move card above carries them to a new address.
+@@END@@

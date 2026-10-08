@@ -1,0 +1,33 @@
+@@APP_NAME@@ {{ .Chart.AppVersion }} is installed with {{ if .Values.autoscaling.enabled }}{{ .Values.autoscaling.minReplicas }} to {{ .Values.autoscaling.maxReplicas }}{{ else }}{{ .Values.replicaCount }}{{ end }} replicas.
+{{- if .Values.ingress.enabled }}
+
+Open it at:
+{{- range .Values.ingress.hosts }}
+  {{ if $.Values.ingress.tls }}https{{ else }}http{{ end }}://{{ .host }}/
+{{- end }}
+{{- else if eq .Values.service.type "NodePort" }}
+
+Open it on any node:
+  export NODE_PORT=$(kubectl get -n {{ .Release.Namespace }} svc {{ include "@@APP_ID@@.fullname" . }} -o jsonpath="{.spec.ports[0].nodePort}")
+  echo http://<node-ip>:$NODE_PORT/
+{{- else if eq .Values.service.type "LoadBalancer" }}
+
+Open it at the external IP of the service:
+  kubectl get -n {{ .Release.Namespace }} svc {{ include "@@APP_ID@@.fullname" . }} -w
+{{- else }}
+
+Try it right away:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "@@APP_ID@@.fullname" . }} 8080:{{ .Values.service.port }}
+  open http://localhost:8080/
+{{- end }}
+
+@@IF static@@
+Users' data is stored in their browsers, per address. Moving from another
+@@APP_NAME@@ server? See docs/DEPLOYMENT.md ("Moving users and their data"): one click
+on the old server carries everything over, or a backup file from the home page.
+@@END@@
+@@IF server@@
+All data lives in PostgreSQL{{ if .Values.database.bundled.enabled }} (the bundled database, volume of the
+StatefulSet {{ include "@@APP_ID@@.fullname" . }}-db){{ else }} (external database){{ end }}. Back it up, see
+docs/DEPLOYMENT.md ("Backups").
+@@END@@

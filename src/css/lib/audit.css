@@ -1,0 +1,8 @@
+/* Library element "audit" (blueprint 1.1.0): the audit log table */
+.audit .row .input { flex: 1; max-width: 420px; }
+.audit .audit-scroll { overflow-x: auto; margin-top: 10px; }
+.audit .tbl td { vertical-align: top; }
+.audit .audit-time { white-space: nowrap; color: var(--ink-2); }
+.audit .audit-details { max-width: 360px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; }
+.audit .audit-bad td:nth-child(3) { color: var(--err); }
+.audit .empty, .audit > .btn { margin-top: 10px; }

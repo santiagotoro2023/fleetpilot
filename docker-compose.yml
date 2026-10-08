@@ -1,0 +1,53 @@
+# FleetPilot with Docker Compose: the quickest start.
+#
+#   docker compose up -d          then open http://<server>:8080
+#
+# The image comes from the GitHub Container Registry. To build it from this
+# repository instead: docker compose up -d --build
+# With HTTPS and a domain name: see deploy/compose/https/
+services:
+  fleetpilot:
+    image: ghcr.io/santiagotoro2023/fleetpilot:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Public address, if it has one (share links point there): https://fleetpilot.example.com
+      FLEETPILOT_CANONICAL: ""
+      FLEETPILOT_DATABASE_URL: "postgres://fleetpilot:${POSTGRES_PASSWORD:-change-me}@db:5432/fleetpilot"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Stateless and locked down: all data lives in the database
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      # The key for the stored secrets, made on the first start. Back it up apart from the database:
+      # docker compose cp fleetpilot:/var/lib/fleetpilot/fleetpilot.key .
+      - keys:/var/lib/fleetpilot
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fleetpilot
+      POSTGRES_USER: fleetpilot
+      # Set your own in .env next to this file: POSTGRES_PASSWORD=…
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-change-me}"
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fleetpilot -d fleetpilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  # All data of FleetPilot. Back it up: docker compose exec db pg_dump -U fleetpilot -Fc fleetpilot > backup.dump
+  db:
+  keys:

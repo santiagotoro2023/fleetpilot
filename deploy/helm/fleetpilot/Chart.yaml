@@ -1,0 +1,11 @@
+apiVersion: v2
+name: fleetpilot
+description: "FleetPilot: Inventory, IP address management and intent-based automation with Ansible: take over new hosts, describe their desired state and apply it to the whole fleet."
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/santiagotoro2023/fleetpilot
+sources:
+  - https://github.com/santiagotoro2023/fleetpilot
+keywords: [automation, ansible, infrastructure, inventory, ipam]
+icon: https://raw.githubusercontent.com/santiagotoro2023/fleetpilot/main/assets/logo/fleetpilot-icon-light.svg

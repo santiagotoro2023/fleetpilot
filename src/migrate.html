@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>FleetPilot</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; background: #F3F6FA; color: #17253A; }
+  @media (prefers-color-scheme: dark) { body { background: #0E1624; color: #E4EBF5; } a { color: #8FB8FF; } }
+  main { max-width: 34rem; padding: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>FleetPilot moved to HTTPS</h1>
+  <p id="msg">Taking you to the secure address and bringing your data along …</p>
+  <noscript><p>Please open the address with <b>https://</b> in front.</p></noscript>
+</main>
+<script>
+// nginx shows this page for plain HTTP requests to the HTTPS port (error 497).
+// It still runs on the old http:// address, so it can read the data that was
+// saved there and hand it to the https:// address of the same server once.
+(async () => {
+  const KEY = 'fleetpilot.v1', MOVED = 'fleetpilot.moved';
+  const target = 'https://' + location.host;
+  const go = url => location.replace(url);
+  if (location.protocol === 'https:') return go('/');
+  const sig = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36) + s.length.toString(36); };
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch (e) { /* storage blocked */ }
+  const hash = location.hash;
+  // The https:// address confirms the import: remember it, then continue there
+  if (hash.startsWith('#/moved/')) {
+    try { if (raw) localStorage.setItem(MOVED, sig(raw)); } catch (e) { /* ignore */ }
+    const to = decodeURIComponent(hash.slice(8));
+    return go(target + '/' + (/^#\/[\w\-\/.]*$/.test(to) ? to : '#/') + '?moved=1');
+  }
+  const rest = location.pathname + location.search + hash;
+  let moved = null;
+  try { moved = localStorage.getItem(MOVED); } catch (e) { /* ignore */ }
+  if (!raw || raw.length < 40 || moved === sig(raw) || typeof CompressionStream !== 'function') return go(target + rest);
+  try {
+    const bytes = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());
+    let s = '';
+    for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    const code = 'z' + btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    go(target + '/#/migrate/' + code + '?from=' + encodeURIComponent(location.origin) + '&to=' + encodeURIComponent(hash || '#/'));
+  } catch (e) {
+    go(target + rest);
+  }
+})();
+</script>
+</body>
+</html>

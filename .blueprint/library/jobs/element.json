@@ -1,0 +1,9 @@
+{
+  "title": "Background jobs",
+  "kind": "module",
+  "profiles": ["server"],
+  "description": "Work that runs in the background: a queue in PostgreSQL that every replica works on, with retries, cancelling, progress and schedules.",
+  "since": "1.1.0",
+  "from": "FleetPilot (runs of workflows)",
+  "requires": []
+}

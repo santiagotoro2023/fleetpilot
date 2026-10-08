@@ -1,0 +1,8 @@
+/* Library element "stats" (blueprint @@BLUEPRINT_VERSION@@): big numbers with a label.
+   Every selector starts with .stats, every value comes from the tokens of base.css. */
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
+.stats > .stat-tile { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-s); padding: 10px 12px; }
+.stats > .stat-tile > b { display: block; font-size: 1.3rem; font-family: var(--mono); font-weight: 700; }
+.stats > .stat-tile > span { font-size: .8rem; color: var(--ink-2); }
+.stats > .stat-tile.ok > b { color: var(--ok); }
+.stats > .stat-tile.bad > b { color: var(--err); }

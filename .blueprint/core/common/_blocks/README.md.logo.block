@@ -1,0 +1,3 @@
+## Logo
+
+The logo is in [`assets/logo`](assets/logo): the icon as SVG for light and dark backgrounds, and as PNG (1024 × 1024, transparent or on the page color, plus a 180 × 180 icon for phones). It is made from `project.conf` (`LOGO_PATTERN` @@LOGO_PATTERN@@, `LOGO_COLORS` @@LOGO_COLORS@@) by the blueprint, in the same style as every project of the family: a dark rounded card holding a few flat parts in signal colors, no text. `node .blueprint/tools/blueprint.mjs logo` makes the PNG files again.

@@ -1,0 +1,64 @@
+# @@APP_NAME@@ with Docker Compose: the quickest start.
+#
+#   docker compose up -d          then open http://<server>:8080
+#
+# The image comes from the GitHub Container Registry. To build it from this
+# repository instead: docker compose up -d --build
+# With HTTPS and a domain name: see deploy/compose/https/
+services:
+  @@APP_ID@@:
+    image: ghcr.io/@@APP_OWNER_LC@@/@@APP_ID@@:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Public address, if it has one (share links point there): https://@@APP_ID@@.example.com
+      @@APP_ENV@@_CANONICAL: ""
+@@IF server@@
+      @@APP_ENV@@_DATABASE_URL: "postgres://@@APP_ID@@:${POSTGRES_PASSWORD:-change-me}@db:5432/@@APP_ID@@"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Stateless and locked down: all data lives in the database
+@@END@@
+@@IF static@@
+    # Stateless and locked down: data lives in the browsers of the users
+@@END@@
+    read_only: true
+    tmpfs:
+      - /tmp
+@@IF lib:secrets@@
+    volumes:
+      # The key for the stored secrets, made on the first start. Back it up apart from the database:
+      # docker compose cp @@APP_ID@@:/var/lib/@@APP_ID@@/@@APP_ID@@.key .
+      - keys:/var/lib/@@APP_ID@@
+@@END@@
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+@@IF server@@
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: @@APP_ID@@
+      POSTGRES_USER: @@APP_ID@@
+      # Set your own in .env next to this file: POSTGRES_PASSWORD=…
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-change-me}"
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U @@APP_ID@@ -d @@APP_ID@@"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  # All data of @@APP_NAME@@. Back it up: docker compose exec db pg_dump -U @@APP_ID@@ -Fc @@APP_ID@@ > backup.dump
+  db:
+@@END@@
+@@IF lib:secrets@@
+  keys:
+@@END@@

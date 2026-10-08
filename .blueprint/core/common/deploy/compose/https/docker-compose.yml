@@ -1,0 +1,78 @@
+# @@APP_NAME@@ behind Caddy, which gets and renews a Let's Encrypt certificate by itself.
+#
+# Needs: a DNS name that points to this server, ports 80 and 443 reachable from the internet.
+#   1. Put your domain into .env:   @@APP_ENV@@_DOMAIN=@@APP_ID@@.example.com
+@@IF server@@
+#      and a database password:     POSTGRES_PASSWORD=…
+@@END@@
+#   2. docker compose up -d
+#   3. Open https://@@APP_ID@@.example.com
+services:
+  @@APP_ID@@:
+    image: ghcr.io/@@APP_OWNER_LC@@/@@APP_ID@@:latest
+    restart: unless-stopped
+    environment:
+      @@APP_ENV@@_CANONICAL: "https://${@@APP_ENV@@_DOMAIN:?set @@APP_ENV@@_DOMAIN in .env}"
+@@IF server@@
+      @@APP_ENV@@_DATABASE_URL: "postgres://@@APP_ID@@:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/@@APP_ID@@"
+    depends_on:
+      db:
+        condition: service_healthy
+@@END@@
+    read_only: true
+    tmpfs:
+      - /tmp
+@@IF lib:secrets@@
+    volumes:
+      # The key for the stored secrets, made on the first start. Back it up apart from the database:
+      # docker compose cp @@APP_ID@@:/var/lib/@@APP_ID@@/@@APP_ID@@.key .
+      - keys:/var/lib/@@APP_ID@@
+@@END@@
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    expose:
+      - "8080"
+@@IF server@@
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: @@APP_ID@@
+      POSTGRES_USER: @@APP_ID@@
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}"
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U @@APP_ID@@ -d @@APP_ID@@"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+@@END@@
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      @@APP_ENV@@_DOMAIN: "${@@APP_ENV@@_DOMAIN}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - @@APP_ID@@
+
+volumes:
+  caddy_data:
+  caddy_config:
+@@IF server@@
+  db:
+@@END@@
+@@IF lib:secrets@@
+  keys:
+@@END@@

@@ -1,0 +1,19 @@
+{
+  "name": "@@APP_ID@@",
+  "private": true,
+  "type": "module",
+  "description": "@@APP_TAGLINE@@",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node test/run.mjs",
+    "test:browser": "node test/run.mjs --browser",
+    "build": "bash build.sh",
+    "check": "node .blueprint/tools/blueprint.mjs check"
+  },
+  "dependencies": {
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

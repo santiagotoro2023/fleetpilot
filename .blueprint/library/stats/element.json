@@ -1,0 +1,9 @@
+{
+  "title": "Stat tiles",
+  "kind": "component",
+  "profiles": ["static", "server"],
+  "description": "Big numbers with a short label, in a grid of small tiles: counts, totals, times.",
+  "since": "1.0.0",
+  "from": "PacketPilot (frame builder statistics)",
+  "requires": []
+}

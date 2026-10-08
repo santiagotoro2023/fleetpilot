@@ -1,0 +1,15 @@
+/* @@APP_NAME@@: only what this project needs on top of base.css.
+   Rules for this file (.blueprint/spec/01-design.md, "Project CSS"):
+   - Use the tokens from base.css (var(--panel), var(--line), var(--r-s), …). No new colors,
+     no new radii, no new shadows, no new font sizes outside the scale.
+   - Give the signal colors a meaning for this project, as PacketPilot does with its layers: */
+:root {
+  --k-input: var(--c-blue);
+  --k-process: var(--c-green);
+  --k-store: var(--c-brown);
+  --k-output: var(--c-orange);
+}
+.bg-input { background: var(--k-input); } .bg-process { background: var(--k-process); }
+.bg-store { background: var(--k-store); } .bg-output { background: var(--k-output); }
+/* The work area of a task page keeps a usable height on phones (PacketPilot: .lesson-body.is-lab .lab) */
+@media (max-width: 760px) { .lesson-body.is-lab > .canvas-wrap { height: 80vh; } }

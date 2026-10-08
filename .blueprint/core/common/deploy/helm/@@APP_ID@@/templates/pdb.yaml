@@ -1,0 +1,13 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "@@APP_ID@@.fullname" . }}
+  labels:
+    {{- include "@@APP_ID@@.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "@@APP_ID@@.selectorLabels" . | nindent 6 }}
+{{- end }}

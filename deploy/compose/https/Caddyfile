@@ -1,0 +1,6 @@
+# Caddy terminates HTTPS (automatic Let's Encrypt) and passes everything to FleetPilot.
+{$FLEETPILOT_DOMAIN} {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy fleetpilot:8080
+}

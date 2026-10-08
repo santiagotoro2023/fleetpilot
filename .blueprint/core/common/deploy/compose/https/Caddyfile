@@ -1,0 +1,6 @@
+# Caddy terminates HTTPS (automatic Let's Encrypt) and passes everything to @@APP_NAME@@.
+{$@@APP_ENV@@_DOMAIN} {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy @@APP_ID@@:8080
+}

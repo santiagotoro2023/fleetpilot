@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@@APP_NAME@@</title>
+<meta name="description" content="@@APP_TAGLINE@@">
+<!-- blueprint:head -->
+<!-- /blueprint:head -->
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Main navigation">
+<!-- blueprint:logo -->
+<!-- /blueprint:logo -->
+    <a href="#/" data-nav="home"><span data-icon="course"></span>Home</a>
+    <a href="#/work" data-nav="work"><span data-icon="lab"></span>Work</a>
+    <a href="#/library" data-nav="library"><span data-icon="nets"></span>Library</a>
+    <a href="#/parts" data-nav="parts"><span data-icon="sliders"></span>Parts</a>
+    <span class="spacer"></span>
+    <button id="theme" type="button" title="Light or dark"></button>
+  </nav>
+  <main class="main"></main>
+</div>
+<noscript><p style="padding:2rem">@@APP_NAME@@ requires JavaScript.</p></noscript>
+<script type="module">
+  import { I } from './js/icons.js';
+  document.querySelectorAll('[data-icon]').forEach(e => e.innerHTML = I[e.dataset.icon]);
+  import('./js/app.js');
+</script>
+</body>
+</html>

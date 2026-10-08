@@ -1,0 +1,66 @@
+# FleetPilot behind Caddy, which gets and renews a Let's Encrypt certificate by itself.
+#
+# Needs: a DNS name that points to this server, ports 80 and 443 reachable from the internet.
+#   1. Put your domain into .env:   FLEETPILOT_DOMAIN=fleetpilot.example.com
+#      and a database password:     POSTGRES_PASSWORD=…
+#   2. docker compose up -d
+#   3. Open https://fleetpilot.example.com
+services:
+  fleetpilot:
+    image: ghcr.io/santiagotoro2023/fleetpilot:latest
+    restart: unless-stopped
+    environment:
+      FLEETPILOT_CANONICAL: "https://${FLEETPILOT_DOMAIN:?set FLEETPILOT_DOMAIN in .env}"
+      FLEETPILOT_DATABASE_URL: "postgres://fleetpilot:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/fleetpilot"
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      # The key for the stored secrets, made on the first start. Back it up apart from the database:
+      # docker compose cp fleetpilot:/var/lib/fleetpilot/fleetpilot.key .
+      - keys:/var/lib/fleetpilot
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    expose:
+      - "8080"
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fleetpilot
+      POSTGRES_USER: fleetpilot
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}"
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fleetpilot -d fleetpilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      FLEETPILOT_DOMAIN: "${FLEETPILOT_DOMAIN}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - fleetpilot
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db:
+  keys:

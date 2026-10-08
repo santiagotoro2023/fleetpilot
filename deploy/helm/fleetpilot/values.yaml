@@ -1,0 +1,131 @@
+# Values for FleetPilot. The defaults suit a small cluster with three nodes:
+# three replicas, spread over the nodes, at most one down at a time during upgrades.
+# All data lives in PostgreSQL (see "database" below), the app pods hold none.
+
+replicaCount: 3
+
+image:
+  repository: ghcr.io/santiagotoro2023/fleetpilot
+  # Defaults to the appVersion of the chart
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# The public address users use, e.g. https://fleetpilot.example.com. Share links
+# point there, and a browser that opens FleetPilot under another address is offered
+# to take its data along. Empty: taken from the first Ingress host (https if TLS).
+canonicalUrl: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+service:
+  type: ClusterIP
+  port: 80
+  # For type NodePort or LoadBalancer
+  nodePort: null
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt
+  hosts:
+    - host: fleetpilot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: fleetpilot-tls
+  #    hosts:
+  #      - fleetpilot.example.com
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 96Mi
+  limits:
+    memory: 384Mi
+
+database:
+  # A small PostgreSQL inside the release: one pod with a persistent volume. Good for
+  # a start and for small installations. For important data use a PostgreSQL that is
+  # run and backed up separately: bundled.enabled=false and url or existingSecret.
+  bundled:
+    enabled: true
+    image: postgres:17-alpine
+    storage: 5Gi
+    # Empty: the default storage class of the cluster
+    storageClass: ""
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+  # Password of the bundled database. Empty: generated at the first install and kept
+  # in the Secret <release>-fleetpilot-db across upgrades.
+  password: ""
+  # An external database: its URL (the chart stores it in a Secret) ...
+  url: ""
+  # ... or an existing Secret that holds the URL
+  existingSecret: ""
+  existingSecretKey: url
+
+# The key that encrypts the stored secrets. Empty: generated at the first install and kept in
+# the Secret <release>-fleetpilot-key, which helm uninstall never deletes. Back it up:
+#   kubectl get secret <release>-fleetpilot-key -o jsonpath='{.data.key}' | base64 -d
+secretKey:
+  # ... or an existing Secret that holds the key (32 random bytes, base64)
+  existingSecret: ""
+  existingSecretKey: key
+
+autoscaling:
+  enabled: false
+  minReplicas: 3
+  maxReplicas: 9
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 1
+
+# Spread the replicas over the nodes (and zones, if the nodes have zone labels)
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  whenUnsatisfiable: ScheduleAnyway
+
+# Only allow traffic from the namespace of the ingress controller (and the cluster's
+# own probes). Needs a CNI that enforces NetworkPolicies.
+# The app may then only connect to PostgreSQL (port 5432) and DNS.
+networkPolicy:
+  enabled: false
+  ingressNamespaceSelector:
+    kubernetes.io/metadata.name: ingress-nginx
+  # More connections the app may open, as NetworkPolicy egress rules, e.g.
+  #   - to: [{ ipBlock: { cidr: 10.0.0.0/8 } }]
+  #     ports: [{ port: 22, protocol: TCP }]
+  extraEgress: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

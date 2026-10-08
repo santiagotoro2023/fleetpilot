@@ -1,0 +1,32 @@
+/* Library element "auth" (blueprint 1.1.0): sign-in pages and account views */
+
+/* Signed out: the rail shows only the logo and the theme button */
+.auth-out .rail > a[data-nav] { display: none; }
+
+/* The sign-in, setup and first-steps pages: one narrow column */
+.auth-page { max-width: 440px; margin: 40px auto 0; }
+.auth-page h1 { margin-bottom: .3em; }
+.auth-form { display: grid; gap: 10px; }
+.auth-form .row { margin-top: 4px; }
+.auth-page .subcard { margin-top: 16px; }
+
+/* Two-factor setup: the QR code next to the steps */
+.auth-totp { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; margin-bottom: 10px; }
+.auth-qr { width: 180px; height: 180px; border: 1px solid var(--line); border-radius: var(--r-s); overflow: hidden; }
+.auth-qr svg { display: block; width: 100%; height: 100%; }
+.auth-secret { display: inline-block; font-family: var(--mono); font-size: .85rem; padding: 4px 8px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-s); word-break: break-all; }
+.auth-codes { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+.auth-codes code { font-family: var(--mono); font-size: .85rem; padding: 4px 8px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-s); text-align: center; }
+
+/* Accounts, sessions and the rules */
+.auth-users, .auth-sessions { margin-top: 10px; }
+.auth-users td, .auth-sessions td { vertical-align: middle; }
+.auth-users .auth-off td { color: var(--ink-3); }
+.auth-policy { max-width: 760px; }
+.auth-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.auth-checks { display: grid; gap: 4px; margin-top: 12px; }
+
+@media (max-width: 760px) {
+  .auth-page { margin-top: 8px; }
+  .auth-totp { grid-template-columns: 1fr; }
+}

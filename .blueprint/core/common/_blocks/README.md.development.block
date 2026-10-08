@@ -1,0 +1,39 @@
+## Development
+
+@@APP_NAME@@ follows the [project blueprint](https://github.com/santiagotoro2023/project-blueprint) @@BLUEPRINT_VERSION@@ (`.blueprint/`, specification in `.blueprint/spec/`): the same design, installer, deployment, tests and repository layout as every project of the family. `project.conf` holds the settings every blueprint file is made from; [DEVIATIONS.md](DEVIATIONS.md) lists where this project deliberately differs.
+
+```bash
+npm install                             # once: Playwright for the browser tests
+@@IF static@@
+node test/lib/serve.mjs                 # the app on http://localhost:8080 (src/, no build step)
+@@END@@
+@@IF server@@
+docker compose up -d db                 # a local PostgreSQL (or set @@APP_ENV@@_DATABASE_URL)
+@@APP_ENV@@_DATABASE_URL=postgres://@@APP_ID@@:change-me@localhost:5432/@@APP_ID@@ node server/main.mjs
+                                        # the app on http://localhost:8080 (src/ and server/, no build step)
+@@END@@
+node test/run.mjs                       # unit tests (test/unit/)
+node test/run.mjs --browser             # browser tests (test/browser/)
+bash build.sh                           # writes the blueprint files, builds @@APP_ID@@-install.sh
+bash test/installer/run.sh debian:12    # the installer on a real Debian (Docker)
+node .blueprint/tools/blueprint.mjs check    # does the project still follow the blueprint?
+node .blueprint/tools/blueprint.mjs update   # move to a newer blueprint (read its changelog)
+```
+
+Every push runs all of it on GitHub (`.github/workflows/release.yml`) and publishes the image and the Helm chart from `main`.
+
+```
+project.conf          name, profile, logo: the settings of the blueprint
+VERSION               the version of @@APP_NAME@@ (semantic versioning)
+src/                  the web app: index.html, css/base.css (design system), css/app.css,
+                      fonts/, js/core/ (blueprint), js/ (this app)
+@@IF server@@
+server/               the app server: main.mjs, core/ (blueprint), api/ (this app),
+                      migrations/ (numbered SQL files, only ever added)
+@@END@@
+installer/            core/ (blueprint) and app.sh (this app's additions)
+deploy/               Docker, Compose with HTTPS, Kubernetes manifest, Helm chart
+test/                 unit/, browser/, installer/, lib/ and run.mjs
+docs/DEPLOYMENT.md    every way to run @@APP_NAME@@
+.blueprint/           the blueprint this project follows (never edited by hand)
+```

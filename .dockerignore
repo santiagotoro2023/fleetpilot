@@ -1,0 +1,6 @@
+# Only the web app, the app server and its dependency list go into the image
+*
+!src/
+!server/
+!package.json
+!package-lock.json

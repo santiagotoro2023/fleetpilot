@@ -1,0 +1,11 @@
+apiVersion: v2
+name: @@APP_ID@@
+description: "@@APP_NAME@@: @@APP_DESCRIPTION@@"
+type: application
+version: @@VERSION@@
+appVersion: "@@VERSION@@"
+home: https://github.com/@@APP_REPO@@
+sources:
+  - https://github.com/@@APP_REPO@@
+keywords: [@@APP_KEYWORDS@@]
+icon: https://raw.githubusercontent.com/@@APP_REPO@@/main/assets/logo/@@APP_ID@@-icon-light.svg

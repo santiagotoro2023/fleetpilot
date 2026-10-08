@@ -1,0 +1,260 @@
+# FleetPilot on Kubernetes without Helm: one file, apply and go.
+#
+#   kubectl apply -f deploy/kubernetes/fleetpilot.yaml
+#   kubectl -n fleetpilot port-forward svc/fleetpilot 8080:80     # try it: http://localhost:8080
+#
+# Before you use the Ingress at the end: set your host name (two places) and the
+# ingressClassName of your cluster. FLEETPILOT_CANONICAL should be the same address.
+# All data lives in PostgreSQL: a small database (one pod with a volume) is part of this
+# file. Set a password in the Secret first. With a database of your own, delete the
+# StatefulSet and Service "db" and put its address into the Secret.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fleetpilot
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fleetpilot-db
+  namespace: fleetpilot
+type: Opaque
+stringData:
+  # Change the password in both lines before the first apply
+  password: change-me
+  url: postgres://fleetpilot:change-me@db:5432/fleetpilot
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fleetpilot-key
+  namespace: fleetpilot
+type: Opaque
+stringData:
+  # The key that encrypts the stored secrets: put in a new one before the first apply
+  # (openssl rand -base64 32), back it up, and never change it afterwards
+  key: ""
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+  namespace: fleetpilot
+  labels:
+    app.kubernetes.io/name: fleetpilot-db
+spec:
+  serviceName: db
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fleetpilot-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fleetpilot-db
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          env:
+            - name: POSTGRES_DB
+              value: fleetpilot
+            - name: POSTGRES_USER
+              value: fleetpilot
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: fleetpilot-db, key: password }
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - name: postgres
+              containerPort: 5432
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "fleetpilot", "-d", "fleetpilot"]
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: run
+              mountPath: /var/run/postgresql
+      volumes:
+        - name: run
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: fleetpilot
+spec:
+  selector:
+    app.kubernetes.io/name: fleetpilot-db
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleetpilot
+  namespace: fleetpilot
+  labels:
+    app.kubernetes.io/name: fleetpilot
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fleetpilot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fleetpilot
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: fleetpilot
+          image: ghcr.io/santiagotoro2023/fleetpilot:0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: FLEETPILOT_CANONICAL
+              value: "https://fleetpilot.example.com"
+            - name: FLEETPILOT_DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: fleetpilot-db, key: url }
+            - name: FLEETPILOT_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: fleetpilot-key, key: key }
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 16Mi
+      # One replica per node on a three node cluster
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: fleetpilot
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: fleetpilot
+  namespace: fleetpilot
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fleetpilot
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleetpilot
+  namespace: fleetpilot
+  labels:
+    app.kubernetes.io/name: fleetpilot
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: fleetpilot
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fleetpilot
+  namespace: fleetpilot
+  annotations:
+    # With cert-manager for a Let's Encrypt certificate (remove if you have none):
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx            # traefik on k3s
+  tls:
+    - hosts: [fleetpilot.example.com]
+      secretName: fleetpilot-tls
+  rules:
+    - host: fleetpilot.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fleetpilot
+                port:
+                  name: http

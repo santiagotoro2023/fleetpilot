@@ -1,0 +1,9 @@
+{
+  "title": "Audit log",
+  "kind": "module",
+  "profiles": ["server"],
+  "description": "Who did what, when and from where: an append-only log of every change and every sign-in, with a searchable table for administrators.",
+  "since": "1.1.0",
+  "from": "FleetPilot",
+  "requires": ["auth"]
+}
