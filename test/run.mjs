@@ -1,4 +1,4 @@
-// Runs the tests of FleetPilot the same way as in every blueprint project (blueprint 1.1.0).
+// Runs the tests of FleetPilot the same way as in every blueprint project (blueprint 1.1.1).
 //
 //   node test/run.mjs                 unit tests: test/unit/*.test.mjs
 //   node test/run.mjs --browser       browser tests: test/browser/*.test.mjs against a local server

@@ -2,7 +2,11 @@
 
 Run every Linux host in your datacenter from one place.
 
-Inventory, IP address management and intent-based automation with Ansible: take over new hosts, describe their desired state and apply it to the whole fleet. Write here, in two or three plain paragraphs, what FleetPilot is, who it is for and what someone can do with it.
+FleetPilot manages the Linux hosts of a datacenter with Ansible, from the browser. You add hosts by address, as a list, a range or a CSV file, or let FleetPilot read the VMs and containers of a Proxmox VE cluster. A **take-over** logs in once with the password of your standard installation and makes FleetPilot the manager: it creates its own user, trusts FleetPilot's SSH certificate authority, gives the host a host certificate, sets new passwords and keys (kept in an encrypted vault) and turns password logins off. From then on every run logs in with a certificate that is valid for a few minutes.
+
+What a host should look like is described with **templates**: forms for 83 settings in ten areas (users, sudo, SSH, packages, repositories, firewall, mounts, cron jobs, and 28 ready-made services such as nginx, HAProxy, PostgreSQL, MariaDB, Docker, WireGuard, BIND, Samba, Prometheus node exporter and Zabbix agent). FleetPilot turns them into plain Ansible playbooks that you can read while you build them. Templates apply to sites, groups and single hosts; the more specific one wins. **Workflows** say what runs, when and how: by hand, on a schedule, when a host is added or a template changes; in batches, with approvals, step by step in a grid you can watch live.
+
+It is for the people who run a few dozen to a few thousand Debian and Ubuntu servers and want one place for their inventory, their addresses, their desired state and the history of every change.
 
 <!-- blueprint:install -->
 ## Installation
@@ -76,7 +80,27 @@ Settings of each browser (theme, panel sizes) stay in the browser, per address; 
 
 ## What's inside
 
-Describe the app in detail: its areas (one paragraph or a short list per menu entry), what is special about it, and anything a user should know. Keep the voice of the blueprint: plain, calm, concrete.
+**Overview.** The fleet in numbers (hosts, managed, unreachable, drifted, runs going, waiting for approval, failed) and below only what needs someone.
+
+**Hosts.** A map of sites and groups with every host as a card: drag hosts between groups, drag groups into each other, right-click for more. A table with search, filters and actions for many hosts at once (run a workflow, move, tag, retire, remove). The Proxmox tab connects clusters with a read-only API token (the certificate can be pinned by its fingerprint) and imports VMs and containers as hosts. A host's page shows its facts, its desired state merged from all its templates (with the playbook FleetPilot runs for it), the drift found by the last check, its secrets and its runs.
+
+**Network.** IP address management: subnets with gateway, DNS, search domains and time servers for the hosts in them, VLANs, pools for automatic addresses, and an address map of every subnet. An address counts as free only when FleetPilot knows nothing about it *and* nothing answers on it (SSH, Windows and printer ports, then ping). Check an address, find the next free one of a pool, reserve it, or scan a subnet.
+
+**Automate.** Templates and workflows. The template editor builds a template from settings, area by area, with the playbook live beside it; every save is a version, and "Where it applies" shows which hosts are behind and pushes the newest version to them (all, the ones behind, or chosen ones). Workflows are either *take-over* (for new hosts) or *maintenance* (for managed hosts); each is a list of steps such as "Give the host an address" (from a pool, with a conflict check), "Set new passwords", "Make SSH keys for users", "Apply templates", "Check for drift", "Update packages", "Reboot", "Wait for an approval", each with what happens when it fails and for which hosts it runs. Built-in workflows: *Take over a Debian host*, *Apply desired state*, *Check drift* (every night), *Rotate passwords*, *Update packages*, *Reboot in batches*.
+
+**Runs.** Every run with its trigger, who started and approved it, a grid of hosts × steps, the live log (with the changed lines of every file) and buttons to approve, reject, cancel or run it again on the failed hosts.
+
+**Settings.** Your account with two-factor sign-in; for administrators the accounts, **roles** (rights per area: hosts, network, templates and workflows, runs, vault, everywhere or only for some sites and groups, with or without approvals), sign-in and password rules, FleetPilot's own settings and the audit log. The **vault** keeps logins, passwords, SSH keys and certificates, API tokens, TLS certificates and notes, encrypted with AES-256-GCM under a key kept apart from the database; every change keeps the old version, every look at a value needs a fresh confirmation and is recorded. **SSH keys** shows FleetPilot's public key and certificate authorities and signs a short-lived certificate for your own key.
+
+### Good to know
+
+- **The first sign-in** needs the setup code that the installer prints (or that the app server writes to its log); administrators must use two-factor sign-in.
+- **What FleetPilot needs on a host:** an SSH server and a login that can become root (with `su` or `sudo`). Python is installed by the take-over if it is missing. The templates are written for Debian and Ubuntu (apt, systemd; network files for ifupdown and netplan). Debian 12 is tested end to end on every change of the tests; Debian 13 and Ubuntu are expected to work but not yet tested that way.
+- **Which connections FleetPilot makes:** SSH to the hosts (port 22 or the port you give), HTTPS to Proxmox (port 8006), and the probes of the address check. On Kubernetes, allow them with `networkPolicy.extraEgress` in the Helm values, for example `[{ ports: [{ port: 22, protocol: TCP }, { port: 8006, protocol: TCP }] }]`.
+- **The key of the vault** (`/var/lib/fleetpilot/fleetpilot.key` with the installer and the image, or `FLEETPILOT_SECRET_KEY`) belongs in your backups, apart from the database backups: without it the stored secrets cannot be read.
+- **Everything is plain Ansible** (`ansible.builtin` modules of ansible-core only). Texts in templates may use FleetPilot's variables (`{{ fp_name }}`, `{{ fp_fqdn }}`, `{{ fp_ip }}`, …) and nothing else, so no template can run code on the FleetPilot server.
+
+The user guide is in [docs/GUIDE.md](docs/GUIDE.md).
 
 <!-- blueprint:logo -->
 ## Logo
@@ -87,7 +111,7 @@ The logo is in [`assets/logo`](assets/logo): the icon as SVG for light and dark 
 <!-- blueprint:development -->
 ## Development
 
-FleetPilot follows the [project blueprint](https://github.com/santiagotoro2023/project-blueprint) 1.1.0 (`.blueprint/`, specification in `.blueprint/spec/`): the same design, installer, deployment, tests and repository layout as every project of the family. `project.conf` holds the settings every blueprint file is made from; [DEVIATIONS.md](DEVIATIONS.md) lists where this project deliberately differs.
+FleetPilot follows the [project blueprint](https://github.com/santiagotoro2023/project-blueprint) 1.1.1 (`.blueprint/`, specification in `.blueprint/spec/`): the same design, installer, deployment, tests and repository layout as every project of the family. `project.conf` holds the settings every blueprint file is made from; [DEVIATIONS.md](DEVIATIONS.md) lists where this project deliberately differs.
 
 ```bash
 npm install                             # once: Playwright for the browser tests
@@ -121,4 +145,7 @@ docs/DEPLOYMENT.md    every way to run FleetPilot
 
 ## Planned
 
-Ideas for later.
+- Network devices: Zyxel, FortiGate and Cisco switches and firewalls, with VLANs and intent-based networking across hosts and devices.
+- More hypervisors (VMware vSphere, Hyper-V) and creating VMs from templates.
+- RHEL-family hosts (dnf, firewalld, SELinux) next to Debian and Ubuntu.
+- Notifications of failed runs and drift by e-mail or webhook.

@@ -1,8 +1,8 @@
 # Design of FleetPilot
 
-<!-- Written by the blueprint (1.1.0) from project.conf: do not edit, run build.sh. -->
+<!-- Written by the blueprint (1.1.1) from project.conf: do not edit, run build.sh. -->
 
-FleetPilot uses the design system of the project blueprint 1.1.0, unchanged: the same
+FleetPilot uses the design system of the project blueprint 1.1.1, unchanged: the same
 colors, fonts, sizes, layout, components, logo style and wording as every project of the family.
 
 - The specification: [`.blueprint/spec/01-design.md`](../.blueprint/spec/01-design.md) and

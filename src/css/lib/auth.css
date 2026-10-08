@@ -1,4 +1,4 @@
-/* Library element "auth" (blueprint 1.1.0): sign-in pages and account views */
+/* Library element "auth" (blueprint 1.1.1): sign-in pages and account views */
 
 /* Signed out: the rail shows only the logo and the theme button */
 .auth-out .rail > a[data-nav] { display: none; }

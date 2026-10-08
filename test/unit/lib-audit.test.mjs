@@ -1,4 +1,4 @@
-// Library element "audit" (blueprint 1.1.0): recording, hiding secrets, the API.
+// Library element "audit" (blueprint 1.1.1): recording, hiding secrets, the API.
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import net from 'node:net';

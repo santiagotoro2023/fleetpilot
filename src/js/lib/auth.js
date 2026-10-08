@@ -1,4 +1,4 @@
-// Library element "auth" (blueprint 1.1.0): the sign-in pages and account views.
+// Library element "auth" (blueprint 1.1.1): the sign-in pages and account views.
 //
 //   import { session, guard, accountView, usersView, policyView, confirmFresh, signOut, authError } from './lib/auth.js'
 //   await session.load()                      before startApp(): who is signed in

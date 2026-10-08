@@ -1,4 +1,4 @@
-// Library element "secrets" (blueprint 1.1.0): encryption, keys and the check
+// Library element "secrets" (blueprint 1.1.1): encryption, keys and the check
 // against the database, with the test database of test/run.mjs.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

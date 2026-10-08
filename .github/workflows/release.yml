@@ -1,4 +1,4 @@
-# Blueprint 1.1.0: the same pipeline in every project.
+# Blueprint 1.1.1: the same pipeline in every project.
 # Every push and pull request: blueprint check, unit and browser tests, Helm chart and
 # Kubernetes manifest, Compose, and the installer on Debian 12 and 13 (systemd).
 # Pushes to main and tags v* then publish to the GitHub Container Registry:

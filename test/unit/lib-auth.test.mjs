@@ -1,4 +1,4 @@
-// Library element "auth" (blueprint 1.1.0): passwords, TOTP, policy and the API of a
+// Library element "auth" (blueprint 1.1.1): passwords, TOTP, policy and the API of a
 // running app server against the test database of test/run.mjs.
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';

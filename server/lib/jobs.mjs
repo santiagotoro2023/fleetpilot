@@ -1,4 +1,4 @@
-// Library element "jobs" (blueprint 1.1.0): background work in a PostgreSQL queue.
+// Library element "jobs" (blueprint 1.1.1): background work in a PostgreSQL queue.
 // Every replica runs workers; a job is taken by exactly one of them (FOR UPDATE SKIP LOCKED),
 // new jobs wake the workers at once (LISTEN/NOTIFY), a job whose worker died is taken again.
 //

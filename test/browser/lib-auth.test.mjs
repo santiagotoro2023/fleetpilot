@@ -1,4 +1,4 @@
-// Library element "auth" (blueprint 1.1.0): the sign-in page and the account view in this app.
+// Library element "auth" (blueprint 1.1.1): the sign-in page and the account view in this app.
 import assert from 'node:assert/strict';
 import { open } from '../lib/browser.mjs';
 import { TEST_USER } from '../lib/auth.mjs';

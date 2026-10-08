@@ -66,7 +66,7 @@ export async function runPlaybook({ plays, hosts, check = false, diff = true, si
     fs.writeFileSync(path.join(dir, 'inventory.yml'), toYaml(inv), { mode: 0o600 });
     // su (during a take-over) keeps the PATH of the login user: tools in /usr/sbin must be found
     const PATH = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
-    fs.writeFileSync(path.join(dir, 'playbook.yml'), toYaml(plays.map(p => ({ ...p, environment: { PATH, ...(p.environment || {}) } }))), { mode: 0o600 });
+    fs.writeFileSync(path.join(dir, 'playbook.yml'), toYaml(plays.map(p => (p.environment === false ? (({ environment, ...rest }) => rest)(p) : { ...p, environment: { PATH, ...(p.environment || {}) } }))), { mode: 0o600 });
     fs.writeFileSync(path.join(dir, 'known_hosts'), knownHosts(hosts, hostCaPublic), { mode: 0o600 });
     fs.writeFileSync(path.join(dir, 'ansible.cfg'), [
       '[defaults]',

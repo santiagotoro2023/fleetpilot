@@ -1,4 +1,4 @@
-// Start of the app server (blueprint 1.1.0): database, migrations, routes, HTTP,
+// Start of the app server (blueprint 1.1.1): database, migrations, routes, HTTP,
 // and a clean stop on SIGTERM (systemd, Docker and Kubernetes all send it).
 //   start({ routes: [items, …] })   every route module is a function (app) => { app.get(…) }
 //   start({ routes, onStart, onStop })   onStart() after migrations and listening (workers of the

@@ -1,4 +1,4 @@
-// Signs the tests of FleetPilot in (blueprint 1.1.0, library element auth): the
+// Signs the tests of FleetPilot in (blueprint 1.1.1, library element auth): the
 // first test creates the administrator with the setup code of test/run.mjs and, when the policy
 // asks for it, sets up two-factor sign-in; the session is kept in test/.output for the next tests.
 //

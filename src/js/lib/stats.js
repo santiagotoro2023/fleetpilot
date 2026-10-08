@@ -1,4 +1,4 @@
-// Library element "stats" (blueprint 1.1.0): big numbers with a label.
+// Library element "stats" (blueprint 1.1.1): big numbers with a label.
 //   statTiles([{ value: 12, label: 'lessons done' }, { value: '1:24', label: 'best time', state: 'ok' }])
 import { h } from '../core/ui.js';
 

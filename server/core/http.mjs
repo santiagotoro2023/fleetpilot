@@ -1,4 +1,4 @@
-// HTTP for the app server (blueprint 1.1.0): routes for the API, the web app
+// HTTP for the app server (blueprint 1.1.1): routes for the API, the web app
 // from the web folder, /healthz and /site.json, with the same headers in every deployment.
 //
 //   app.get('/api/items', async ctx => rows)            → 200 with JSON

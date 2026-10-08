@@ -1,6 +1,6 @@
 # Deploying FleetPilot
 
-<!-- Written by the blueprint (1.1.0) from project.conf: do not edit, run build.sh. -->
+<!-- Written by the blueprint (1.1.1) from project.conf: do not edit, run build.sh. -->
 
 FleetPilot is a web app with an app server (Node.js) and a **PostgreSQL** database.
 The app server serves the web app and its API and keeps **all data in PostgreSQL**:
@@ -22,7 +22,7 @@ Before you go to production, read [The database](#the-database) and [Backups](#b
 ## The image
 
 ```
-ghcr.io/santiagotoro2023/fleetpilot:0.1.0      a fixed version (recommended)
+ghcr.io/santiagotoro2023/fleetpilot:1.0.0      a fixed version (recommended)
 ghcr.io/santiagotoro2023/fleetpilot:latest     the newest version from main
 ```
 
@@ -71,7 +71,7 @@ docker run -d --name fleetpilot --restart unless-stopped \
   -p 8080:8080 \
   -e FLEETPILOT_DATABASE_URL=postgres://fleetpilot:secret@db.example.com:5432/fleetpilot \
   --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
-  ghcr.io/santiagotoro2023/fleetpilot:0.1.0
+  ghcr.io/santiagotoro2023/fleetpilot:1.0.0
 ```
 
 Without a PostgreSQL server of your own, use Docker Compose: it brings one along.
@@ -140,7 +140,7 @@ Install straight from the registry:
 
 ```bash
 helm install fleetpilot oci://ghcr.io/santiagotoro2023/charts/fleetpilot \
-  --version 0.1.0 --namespace fleetpilot --create-namespace \
+  --version 1.0.0 --namespace fleetpilot --create-namespace \
   -f my-values.yaml
 ```
 

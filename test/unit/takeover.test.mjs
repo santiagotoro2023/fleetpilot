@@ -5,7 +5,9 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import net from 'node:net';
-import { apiSession } from '../lib/auth.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { apiSession, totp } from '../lib/auth.mjs';
 import { sha512crypt } from '../../server/lib/crypt.mjs';
 
 const why = process.env.FLEETPILOT_E2E !== '1' ? 'set FLEETPILOT_E2E=1 to run it'
@@ -29,6 +31,17 @@ try {
   const req = await apiSession(base);
   const call = async (m, p, b) => { const r = await req(m, p, b); assert.ok(r.status < 300, `${m} ${p}: ${JSON.stringify(r.body)}`); return r.body; };
   const runOf = async id => { for (let i = 0; i < 900; i++) { const r = await call('GET', `/api/runs/${id}`); if (['succeeded', 'partial', 'failed', 'cancelled'].includes(r.status)) return r; await sleep(1000); } throw new Error('the run did not finish'); };
+  // Showing a secret needs a recent confirmation: with the two-factor code of the test administrator
+  const reveal = async id => {
+    let r = await req('POST', `/api/vault/${id}/reveal`, {});
+    if (r.status === 403 && r.body?.error?.code === 'verify_needed') {
+      const secret = JSON.parse(fs.readFileSync(path.join(process.env.OUT || 'test/.output', 'auth-session.json'), 'utf8')).totp;
+      for (const step of [0, 1]) if ((await req('POST', '/api/auth/verify', { code: totp(secret, step) })).status === 200) break;
+      r = await req('POST', `/api/vault/${id}/reveal`, {});
+    }
+    assert.equal(r.status, 200, JSON.stringify(r.body));
+    return r.body;
+  };
   const why = async id => (await call('GET', `/api/runs/${id}/log?after=0`)).lines.map(l => `${l.host} ${l.level} ${l.line}`).join('\n');
 
   const login = await call('POST', '/api/vault', { kind: 'login', name: 'Debian install', username: 'admin', data: { password: 'install-pw', becomePassword: 'root-pw' } });
@@ -55,7 +68,7 @@ try {
   // The vault has the new root password, and it is the one on the host
   const secrets = await call('GET', `/api/vault?host=${host.id}`);
   const rootPw = secrets.find(s => s.kind === 'password' && s.username === 'root');
-  const pw = (await call('POST', `/api/vault/${rootPw.id}/reveal`, {})).password;
+  const pw = (await reveal(rootPw.id)).password;
   const shadow = docker('exec', name, 'getent', 'shadow', 'root').split(':')[1];
   assert.equal(sha512crypt(pw, shadow.split('$')[2]), shadow, 'the root password in the vault is the one on the host'); n++;
 
@@ -76,7 +89,7 @@ try {
   // Rotating: a new version in the vault, and the host has it
   const rotate = wfs.find(w => w.builtin === 'rotate');
   assert.equal((await runOf((await call('POST', `/api/workflows/${rotate.id}/run`, { hostIds: [host.id] })).id)).status, 'succeeded'); n++;
-  const pw2 = (await call('POST', `/api/vault/${rootPw.id}/reveal`, {})).password;
+  const pw2 = (await reveal(rootPw.id)).password;
   assert.notEqual(pw2, pw); n++;
   const shadow2 = docker('exec', name, 'getent', 'shadow', 'root').split(':')[1];
   assert.equal(sha512crypt(pw2, shadow2.split('$')[2]), shadow2); n++;

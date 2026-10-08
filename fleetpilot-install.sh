@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  FleetPilot 0.1.0
+#  FleetPilot 1.0.0
 #  Run every Linux host in your datacenter from one place.
 #
 #  Installs FleetPilot on Debian 12 (Bookworm) or 13 (Trixie):
@@ -52,10 +52,10 @@
 # =============================================================================
 set -euo pipefail
 
-# Made from blueprint 1.1.0 (https://github.com/santiagotoro2023/project-blueprint)
+# Made from blueprint 1.1.1 (https://github.com/santiagotoro2023/project-blueprint)
 APP_ID="fleetpilot"
 APP_NAME="FleetPilot"
-APP_VERSION="0.1.0"
+APP_VERSION="1.0.0"
 APP_PROFILE="server"
 APP_PORT="8443"
 APP_ROOT="/opt/${APP_ID}"
@@ -210,6 +210,7 @@ write_files() {
 .ar-files { --area: var(--a-files); }
 
 /* ---------- Pages ---------- */
+a.btn:not(.primary) { color: var(--ink); }
 .page.fp-page-wide { max-width: 1440px; }
 .fp-head { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 14px; }
 .fp-head h1 { margin-bottom: .15em; overflow-wrap: anywhere; }
@@ -259,8 +260,10 @@ write_files() {
 .fp-tablewrap { overflow-x: auto; max-width: 100%; }
 .fp-table { font-family: var(--font); font-size: .86rem; }
 .fp-table th { font-size: .8rem; white-space: nowrap; }
-.fp-table td { padding: 6px 6px; vertical-align: top; word-break: normal; overflow-wrap: anywhere; }
+.fp-table td { padding: 6px 6px; vertical-align: top; word-break: normal; overflow-wrap: break-word; }
+.fp-table td .mono, .fp-table td.mono { word-break: break-all; }
 .fp-table td .mono, .fp-table td.mono { font-size: .8rem; }
+.page > .tabs.subtabs { margin-bottom: 12px; }
 .fp-table tr.fp-sel td { background: color-mix(in srgb, var(--focus) 7%, transparent); }
 .fp-table .btn { padding: 3px 8px; font-size: .82rem; }
 .fp-actions-cell { white-space: nowrap; text-align: right; }
@@ -809,7 +812,7 @@ abbr.gl:hover, abbr.gl:focus-visible { border-bottom-color: var(--ink); outline:
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/css/lib"
   cat > "$W/css/lib/audit.css" <<'__FLEETPILOT_FILE_END__'
-/* Library element "audit" (blueprint 1.1.0): the audit log table */
+/* Library element "audit" (blueprint 1.1.1): the audit log table */
 .audit .row .input { flex: 1; max-width: 420px; }
 .audit .audit-scroll { overflow-x: auto; margin-top: 10px; }
 .audit .tbl td { vertical-align: top; }
@@ -820,7 +823,7 @@ __FLEETPILOT_FILE_END__
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/css/lib"
   cat > "$W/css/lib/auth.css" <<'__FLEETPILOT_FILE_END__'
-/* Library element "auth" (blueprint 1.1.0): sign-in pages and account views */
+/* Library element "auth" (blueprint 1.1.1): sign-in pages and account views */
 
 /* Signed out: the rail shows only the logo and the theme button */
 .auth-out .rail > a[data-nav] { display: none; }
@@ -855,7 +858,7 @@ __FLEETPILOT_FILE_END__
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/css/lib"
   cat > "$W/css/lib/stats.css" <<'__FLEETPILOT_FILE_END__'
-/* Library element "stats" (blueprint 1.1.0): big numbers with a label.
+/* Library element "stats" (blueprint 1.1.1): big numbers with a label.
    Every selector starts with .stats, every value comes from the tokens of base.css. */
 .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
 .stats > .stat-tile { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-s); padding: 10px 12px; }
@@ -6270,7 +6273,7 @@ function rowsEl(f, values, changed, ro) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/core"
   cat > "$W/js/core/api.js" <<'__FLEETPILOT_FILE_END__'
-// Calls to the API of the app server (blueprint 1.1.0).
+// Calls to the API of the app server (blueprint 1.1.1).
 //   const items = await api.get('/api/items')
 //   await api.post('/api/items', { title: 'New' })
 // Errors arrive as Error with the server's message (show it with toast(e.message)).
@@ -6376,7 +6379,7 @@ export async function unpack(code) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/core"
   cat > "$W/js/core/shell.js" <<'__FLEETPILOT_FILE_END__'
-// The app shell of every blueprint project (blueprint 1.1.0): theme switch,
+// The app shell of every blueprint project (blueprint 1.1.1): theme switch,
 // the active menu entry, the move card and the start of the hash router.
 import { toast } from './ui.js';
 import { I } from './icons.js';
@@ -6432,7 +6435,7 @@ __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/core"
   cat > "$W/js/core/site.js" <<'__FLEETPILOT_FILE_END__'
 // Facts about this installation (site.json, written by the installer, the container or
-// the app server) and moving a user's data between addresses (blueprint 1.1.0).
+// the app server) and moving a user's data between addresses (blueprint 1.1.1).
 // Browser data lives per address, so when a server gets a new main address, users take
 // their data along with one click.
 import { h, toast } from './ui.js';
@@ -6500,7 +6503,7 @@ export async function receiveMigration(code, store, route) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/core"
   cat > "$W/js/core/storage.js" <<'__FLEETPILOT_FILE_END__'
-// Storage in the browser for FleetPilot (blueprint 1.1.0).
+// Storage in the browser for FleetPilot (blueprint 1.1.1).
 // One key, fleetpilot.v1, holds everything. Its shape only ever grows: new fields get
 // defaults, nothing is renamed, so an update never loses what a user did.
 // The project describes its data (src/js/store.js): createStore() does the rest.
@@ -6687,7 +6690,7 @@ export { s };
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/lib"
   cat > "$W/js/lib/audit.js" <<'__FLEETPILOT_FILE_END__'
-// Library element "audit" (blueprint 1.1.0): the audit log as a searchable table.
+// Library element "audit" (blueprint 1.1.1): the audit log as a searchable table.
 //   import { auditView } from './lib/audit.js'
 //   auditView(container, { label: action => 'Signed in' })   label() may name the app's own actions
 import { h, toast } from '../core/ui.js';
@@ -6747,7 +6750,7 @@ export function auditView(container, { label = () => null, query = {} } = {}) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/lib"
   cat > "$W/js/lib/auth.js" <<'__FLEETPILOT_FILE_END__'
-// Library element "auth" (blueprint 1.1.0): the sign-in pages and account views.
+// Library element "auth" (blueprint 1.1.1): the sign-in pages and account views.
 //
 //   import { session, guard, accountView, usersView, policyView, confirmFresh, signOut, authError } from './lib/auth.js'
 //   await session.load()                      before startApp(): who is signed in
@@ -7226,7 +7229,7 @@ export function qrSvg(text) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/lib"
   cat > "$W/js/lib/stats.js" <<'__FLEETPILOT_FILE_END__'
-// Library element "stats" (blueprint 1.1.0): big numbers with a label.
+// Library element "stats" (blueprint 1.1.1): big numbers with a label.
 //   statTiles([{ value: 12, label: 'lessons done' }, { value: '1:24', label: 'best time', state: 'ok' }])
 import { h } from '../core/ui.js';
 
@@ -7328,7 +7331,7 @@ function wfTile(w) {
     h('ol', { class: 'fp-steplist small' }, w.steps.slice(0, 5).map(s => h('li', {}, s.title)), w.steps.length > 5 ? h('li', { class: 'muted' }, `and ${w.steps.length - 5} more`) : null),
     h('div', { class: 'small muted fp-wf-meta' },
       h('span', {}, w.enabled ? triggerText(w.definition.trigger) : 'Switched off'),
-      w.next_at && w.enabled ? h('span', {}, `next ${when(w.next_at).replace('just now', 'now')}`) : null,
+      w.next_at && w.enabled ? h('span', {}, `next ${new Date(w.next_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`) : null,
       w.last_run ? h('span', {}, 'last ', runState(w.last_run.status)) : null));
 }
 
@@ -7762,7 +7765,7 @@ function hostOverview(x, body) {
     ]), x.addresses.length ? h('div', {}, h('h4', { class: 'fp-h4' }, 'Addresses in IP management'), table(['Address', 'Subnet', 'State'], x.addresses.map(a => h('tr', {}, h('td', {}, a.ip), h('td', {}, `${a.cidr}${a.subnet ? ` ${a.subnet}` : ''}`), h('td', { class: 'fp-font' }, a.state))))) : null),
     h('section', { class: 'fp-card' }, h('h2', {}, 'System'), f.collected ? kv([
       ['Operating system', [f.distribution, f.distribution_version, f.distribution_release && `(${f.distribution_release})`].filter(Boolean).join(' ')], ['Kernel', f.kernel], ['Architecture', f.architecture],
-      ['CPUs', f.processor_vcpus], ['Memory', mem], ['Runs on', [f.virtualization_role === 'guest' ? `a ${f.virtualization_type} guest` : f.virtualization_role === 'host' ? 'bare metal or a hypervisor' : '', f.product_name].filter(Boolean).join(', ')],
+      ['CPUs', f.processor_vcpus], ['Memory', mem], ['Runs on', [f.virtualization_role === 'guest' ? `a ${f.virtualization_type} guest` : f.virtualization_role === 'host' ? 'bare metal or a hypervisor' : '', f.product_name !== 'NA' && f.product_name].filter(Boolean).join(', ')],
       ['Name on the host', f.fqdn || f.hostname], ['Default route', f.default_ipv4?.gateway ? `${f.default_ipv4.gateway} via ${f.default_ipv4.interface}` : ''], ['IPv4 addresses', (f.all_ipv4_addresses || []).join(', ')],
       ['Up for', up], ['Read', when(f.collected)]
     ]) : empty('Nothing read yet. Facts arrive with the first run on this host.')),
@@ -8220,7 +8223,7 @@ function build(d) {
     { value: c.failed ?? 0, label: 'failed today', state: c.failed ? 'bad' : undefined }
   ];
   page.append(statTiles(tiles));
-  const section = (title, rows, emptyText) => [h('h2', { class: 'fp-sec' }, title), rows.length ? rows : empty(emptyText)];
+  const section = (title, rows, emptyText) => [h('h2', { class: 'fp-sec' }, title), ...(rows.length ? rows : [empty(emptyText)])];
   const runRow = r => h('tr', {}, h('td', {}, h('a', { href: `#/runs/${r.id}` }, r.name)), h('td', {}, runState(r.status)), h('td', {}, r.done !== undefined ? `${r.done} of ${plural(r.hosts, 'host', 'hosts')}` : plural(r.hosts ?? 0, 'host', 'hosts')), h('td', { class: 'muted' }, r.requested_by || ''), h('td', { class: 'muted' }, when(r.finished_at || r.started_at || r.created_at)));
   const nothing = !a.approvals.length && !a.running.length && !a.failedRuns.length && !a.unreachable.length && !a.drifted.length && !a.notTakenOver.length;
   if (nothing && c.hosts) page.append(h('div', { class: 'done-banner fp-allgood' }, 'All is well: nothing needs you right now.'));
@@ -8416,7 +8419,7 @@ import { main, meta, get, call, can, pageHead, btn, tabs, dialog, field, input, 
 import { revealSecret } from './hosts.js';
 
 const AUDIT_LABELS = {
-  'host.added': 'Added hosts', 'host.changed': 'Changed a host', 'host.deleted': 'Removed a host', 'hosts.bulk': 'Changed many hosts',
+  'host.added': 'Added hosts', 'host.changed': 'Changed a host', 'host.removed': 'Removed a host', 'host.bulk_move': 'Moved hosts', 'host.bulk_tag': 'Tagged hosts', 'host.bulk_untag': 'Removed tags from hosts', 'host.bulk_retire': 'Retired hosts', 'host.bulk_activate': 'Brought hosts back',
   'group.created': 'Added a group', 'group.changed': 'Changed a group', 'group.deleted': 'Deleted a group',
   'template.created': 'Created a template', 'template.saved': 'Saved a template version', 'template.changed': 'Changed a template', 'template.deleted': 'Deleted a template',
   'template.assigned': 'Applied a template', 'template.unassigned': 'Removed a template',
@@ -8488,7 +8491,7 @@ async function drawRoles(body) {
   body.append(h('p', { class: 'muted small' }, 'A role gives rights per area, everywhere or only for some sites and groups. With "Runs wait for an approval", someone with the right to approve looks at every run first.'));
   body.append(h('div', { class: 'row', style: { marginBottom: '10px' } }, btn('Add a role', 'plus', () => roleDialog(null), 'primary')));
   body.append(table(['Role', ...Object.values(areas).map(a => a.title), 'Where', 'Accounts', ''], roles.map(r => h('tr', {},
-    h('td', {}, h('b', {}, r.name), r.builtin ? h('span', { class: 'chip', style: { marginLeft: '6px' } }, 'built in') : null, h('div', { class: 'small muted' }, r.description), r.permissions.needsApproval ? h('div', { class: 'small fp-note' }, 'Runs wait for an approval') : null),
+    h('td', {}, h('b', {}, r.name), r.builtin ? h('span', { class: 'chip', style: { marginLeft: '6px' } }, 'built in') : null, h('div', { class: 'small muted' }, r.description), r.permissions.needsApproval ? h('div', { style: { marginTop: '4px' } }, h('span', { class: 'fp-state wait' }, 'Runs wait for an approval')) : null),
     ...Object.keys(areas).map(k => h('td', { class: 'small' }, names[r.permissions[k]] || 'No access')),
     h('td', { class: 'small' }, r.scope_group_ids.length ? r.scope_group_ids.map(g => groupName.get(g) || '?').join(', ') : 'Everywhere'),
     h('td', {}, String(r.users)),
@@ -8522,12 +8525,12 @@ async function drawRoles(body) {
 async function drawFleetPilot(body) {
   const s = await get('/api/settings');
   const conc = input({ mono: true, type: 'number', min: 1, max: 64, value: s['runs.concurrency'], style: { width: '96px' } });
-  const keep = input({ mono: true, type: 'number', min: 7, max: 3650, value: s['runs.keepDays'], style: { width: '96px' } });
-  const live = h('input', { type: 'checkbox', checked: s['network.liveCheck'] });
-  const reveal = input({ mono: true, type: 'number', min: 1, max: 60, value: s['vault.revealMinutes'], style: { width: '96px' } });
+  const keep = input({ mono: true, type: 'number', min: 7, max: 3650, value: s['runs.keep_days'], style: { width: '96px' } });
+  const live = h('input', { type: 'checkbox', checked: s['network.live_check'] });
+  const reveal = input({ mono: true, type: 'number', min: 1, max: 60, value: s['vault.reveal_minutes'], style: { width: '96px' } });
   body.append(h('form', { class: 'fp-form', onsubmit: async e => {
     e.preventDefault();
-    await call(() => api.put('/api/settings', { 'runs.concurrency': Number(conc.value), 'runs.keepDays': Number(keep.value), 'network.liveCheck': live.checked, 'vault.revealMinutes': Number(reveal.value) })).then(() => toast('Settings saved')).catch(() => {});
+    await call(() => api.put('/api/settings', { 'runs.concurrency': Number(conc.value), 'runs.keep_days': Number(keep.value), 'network.live_check': live.checked, 'vault.reveal_minutes': Number(reveal.value) })).then(() => toast('Settings saved')).catch(() => {});
   } },
   h('h2', {}, 'Runs'),
   h('div', { class: 'fp-grid2' }, field('Runs at the same time', conc, 'Per FleetPilot server. Takes effect after a restart.'), field('Keep finished runs for', keep, 'Days, with their logs.')),
@@ -8653,7 +8656,7 @@ async function drawSsh(body) {
   const out = h('div', {});
   body.append(h('h2', { class: 'fp-sec' }, 'A certificate for yourself'),
     h('p', { class: 'muted small' }, `Log in to managed hosts with your own key: FleetPilot signs it for a few hours. You log in as the user of your host with the principal fp-${session.user.username}, when a template lets that principal in (Access, "Logins with SSH certificates").`),
-    field('Your public key', pub), h('div', { class: 'row' }, field('Valid for', hours), btn('Sign my key', 'key', async () => {
+    field('Your public key', pub), h('div', { class: 'row fp-assign' }, field('Valid for', hours), btn('Sign my key', 'key', async () => {
       const send = () => api.post('/api/vault/certificate', { publicKey: pub.value.trim(), hours: Number(hours.value) });
       let r;
       try { r = await send(); }
@@ -8971,11 +8974,12 @@ export async function viewWorkflow(ctx, id) {
     const cron = input({ mono: true, value: d.trigger.cron || '30 2 * * *', disabled: ro, placeholder: 'minute hour day month weekday' });
     const cronSays = h('span', { class: 'fp-help' });
     const cronBox = h('div', { class: 'fp-cron' }, field('Schedule (UTC)', cron), cronSays, h('div', { class: 'row' }, PRESETS.map(([c, t]) => h('button', { type: 'button', class: 'btn ghost fp-preset', disabled: ro, onclick: () => { cron.value = c; setCron(); } }, t))));
-    const setCron = () => { d.trigger.cron = cron.value.trim(); cronSays.textContent = cronText(d.trigger.cron) === d.trigger.cron ? 'Five fields: minute, hour, day of month, month, weekday.' : `Runs ${cronText(d.trigger.cron)}.`; markDirty(); };
+    const sayCron = () => { cronSays.textContent = cronText(d.trigger.cron) === d.trigger.cron ? 'Five fields: minute, hour, day of month, month, weekday.' : `Runs ${cronText(d.trigger.cron)}.`; };
+    const setCron = () => { d.trigger.cron = cron.value.trim(); sayCron(); markDirty(); };
     cron.addEventListener('input', setCron);
-    cronSays.textContent = d.trigger.cron ? `Runs ${cronText(d.trigger.cron)}.` : '';
+    if (d.trigger.cron) sayCron();
     const showCron = () => cronBox.classList.toggle('hidden', d.trigger.type !== 'schedule');
-    trig.addEventListener('change', () => { d.trigger.type = trig.value; if (trig.value === 'schedule' && !d.trigger.cron) d.trigger.cron = cron.value.trim(); showCron(); markDirty(); });
+    trig.addEventListener('change', () => { d.trigger.type = trig.value; if (trig.value === 'schedule' && !d.trigger.cron) { d.trigger.cron = cron.value.trim(); sayCron(); } showCron(); markDirty(); });
     showCron();
     const gsel = h('select', { class: 'input', multiple: true, size: Math.min(6, Math.max(3, groups.length)), disabled: ro, onchange: e => { d.targets.groups = [...e.target.selectedOptions].map(o => o.value); markDirty(); } },
       groups.map(([v, n]) => h('option', { value: v, selected: d.targets.groups.map(String).includes(String(v)) }, n)));
@@ -8985,7 +8989,7 @@ export async function viewWorkflow(ctx, id) {
     const appr = select([['role', 'When the roles of the person ask for it'], ['always', 'Always']], d.approval, { disabled: ro, onchange: e => { d.approval = e.target.value; markDirty(); } });
     const targetsOut = h('div', { class: 'small' });
     left.append(
-      h('h4', {}, 'Name'), field('Name', name), field('Description', desc),
+      h('h4', {}, 'About'), field('Name', name), field('Description', desc),
       h('label', { class: 'row small fp-check' }, on, 'Switched on'),
       h('h4', {}, 'When'), field('It starts', trig), cronBox,
       h('h4', {}, 'On which hosts'),
@@ -24367,7 +24371,7 @@ export default function network(app) {
   app.post('/api/network/next', async ctx => {
     const b = ctx.body || {};
     await need(ctx, 'network', b.reserve ? 'change' : 'view');
-    const live = await getSetting('network.liveCheck');
+    const live = await getSetting('network.live_check');
     const r = await nextFree({ poolId: isId(b.poolId) ? b.poolId : null, subnetId: isId(b.subnetId) ? b.subnetId : null, liveCheck: live, claim: null, skip: Math.min(1000, Number(b.skip) || 0) });
     if (b.reserve) {
       await query("insert into addresses (subnet_id, ip, state, hostname, note) values ($1, $2, 'reserved', $3, $4)", [r.subnetId, r.ip, str(b.hostname, 253), str(b.note, 500) || `Reserved by ${ctx.user.username}`]);
@@ -24378,7 +24382,7 @@ export default function network(app) {
 
   app.post('/api/network/check', async ctx => {
     await need(ctx, 'network', 'view');
-    return checkAddress(str(ctx.body?.ip, 45), { live: await getSetting('network.liveCheck') });
+    return checkAddress(str(ctx.body?.ip, 45), { live: await getSetting('network.live_check') });
   });
 
   app.post('/api/network/subnets/:id/scan', async ctx => {
@@ -24423,11 +24427,11 @@ export default function overview(app) {
       counts: { ...c, ...runs },
       attention: {
         approvals: canRuns ? await query(`select id::text, name, status, requested_by, created_at, (select count(*)::int from run_hosts rh where rh.run_id = r.id) as hosts from runs r
-          where status in ('awaiting_approval', 'waiting') order by id desc limit 20`) : [],
+          where status in ('awaiting_approval', 'waiting') order by r.id desc limit 20`) : [],
         running: canRuns ? await query(`select id::text, name, status, requested_by, started_at, created_at, (select count(*)::int from run_hosts rh where rh.run_id = r.id) as hosts,
           (select count(*)::int from run_hosts rh where rh.run_id = r.id and rh.status in ('ok', 'changed', 'failed', 'unreachable', 'skipped')) as done from runs r
-          where status in ('queued', 'running') order by id desc limit 20`) : [],
-        failedRuns: canRuns ? await query(`select id::text, name, status, finished_at, summary from runs where status in ('failed', 'partial') and finished_at > now() - interval '7 days' order by id desc limit 10`) : [],
+          where status in ('queued', 'running') order by r.id desc limit 20`) : [],
+        failedRuns: canRuns ? await query(`select id::text, name, status, finished_at, summary from runs where status in ('failed', 'partial') and finished_at > now() - interval '7 days' order by runs.id desc limit 10`) : [],
         unreachable: await list(`select h.id::text, h.name, h.address, h.last_seen_at from hosts h where h.state = 'unreachable' and ${where} order by h.name limit 20`),
         drifted: await list(`select h.id::text, h.name, (h.drift->>'changed')::int as changed, h.drift->>'at' as at from hosts h where (h.drift->>'changed')::int > 0 and h.state <> 'retired' and ${where} order by (h.drift->>'changed')::int desc limit 20`),
         notTakenOver: await list(`select h.id::text, h.name, h.address, h.state, h.created_at from hosts h where h.state in ('new', 'failed') and ${where} order by h.created_at desc limit 20`)
@@ -24505,7 +24509,7 @@ export default function runs(app) {
     const r = await loadRun(ctx, ctx.params.id);
     await flushLog();
     const after = isId(ctx.query.after) ? ctx.query.after : '0';
-    const rows = await query(`select id::text, at, step, host, level, line from run_logs where run_id = $1 and id > $2 ${ctx.query.host ? 'and host = $3' : ''} order by id limit 2000`,
+    const rows = await query(`select id::text, at, step, host, level, line from run_logs where run_id = $1 and id > $2 ${ctx.query.host ? 'and host = $3' : ''} order by run_logs.id limit 2000`,
       ctx.query.host ? [r.id, after, String(ctx.query.host)] : [r.id, after]);
     return { status: r.status, lines: rows };
   });
@@ -24553,17 +24557,17 @@ import { record } from '../lib/audit.mjs';
 
 export const DEFAULTS = {
   'runs.concurrency': 4,          // runs at the same time per FleetPilot server
-  'runs.keepDays': 180,           // finished runs are removed after so many days
-  'hosts.autoTakeover': false,    // reserved: take-over workflows with the trigger "host added" decide
-  'network.liveCheck': true,      // probe an address before it is handed out
-  'vault.revealMinutes': 5        // how long a confirmation lasts for showing secrets
+  'runs.keep_days': 180,           // finished runs are removed after so many days
+  'hosts.auto_takeover': false,    // reserved: take-over workflows with the trigger "host added" decide
+  'network.live_check': true,      // probe an address before it is handed out
+  'vault.reveal_minutes': 5        // how long a confirmation lasts for showing secrets
 };
 const RULES = {
   'runs.concurrency': v => Number.isInteger(v) && v >= 1 && v <= 64,
-  'runs.keepDays': v => Number.isInteger(v) && v >= 7 && v <= 3650,
-  'hosts.autoTakeover': v => typeof v === 'boolean',
-  'network.liveCheck': v => typeof v === 'boolean',
-  'vault.revealMinutes': v => Number.isInteger(v) && v >= 1 && v <= 60
+  'runs.keep_days': v => Number.isInteger(v) && v >= 7 && v <= 3650,
+  'hosts.auto_takeover': v => typeof v === 'boolean',
+  'network.live_check': v => typeof v === 'boolean',
+  'vault.reveal_minutes': v => Number.isInteger(v) && v >= 1 && v <= 60
 };
 
 export async function getSetting(key) {
@@ -25050,7 +25054,7 @@ export default function vault(app) {
     const pubKey = str(ctx.body?.publicKey, 4000).trim();
     if (!/^(ssh-ed25519|ecdsa-sha2-nistp\d+|ssh-rsa) [A-Za-z0-9+/=]+( .*)?$/.test(pubKey)) throw httpError(400, 'bad_key', 'Paste your public key (one line, ssh-ed25519 AAAA…).');
     const hours = Math.min(24, Math.max(1, Math.round(Number(ctx.body?.hours) || 1)));
-    await requireFresh(ctx, await getSetting('vault.revealMinutes'));
+    await requireFresh(ctx, await getSetting('vault.reveal_minutes'));
     const ca = await userCa();
     const certificate = await signKey({ caPrivateKey: ca.data.privateKey, publicKey: pubKey, identity: `${ctx.user.username}@fleetpilot`, principals: [`fp-${ctx.user.username}`], validity: `+${hours}h` });
     await record(ctx, 'ssh_certificate.issued', { target: { type: 'user', id: ctx.user.id, name: ctx.user.username }, hours });
@@ -25079,7 +25083,7 @@ export default function vault(app) {
   app.post('/api/vault/:id/reveal', async ctx => {
     const s = await load(ctx, ctx.params.id, 'reveal');
     if (s.scope === 'system' && !ctx.user.isAdmin) throw httpError(403, 'not_allowed', 'Only administrators can show FleetPilot\'s own keys.');
-    await requireFresh(ctx, await getSetting('vault.revealMinutes'));
+    await requireFresh(ctx, await getSetting('vault.reveal_minutes'));
     let data;
     const v = ctx.body?.version;
     if (isId(v) && Number(v) !== s.version) {
@@ -25283,7 +25287,7 @@ export default function workflows(app) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/config.mjs" <<'__FLEETPILOT_FILE_END__'
-// Configuration of the app server (blueprint 1.1.0): only environment variables,
+// Configuration of the app server (blueprint 1.1.1): only environment variables,
 // all named FLEETPILOT_*, the same in every deployment (installer, Docker, Kubernetes).
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25315,7 +25319,7 @@ export const config = {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/db.mjs" <<'__FLEETPILOT_FILE_END__'
-// PostgreSQL for the app server (blueprint 1.1.0).
+// PostgreSQL for the app server (blueprint 1.1.1).
 //   query(sql, params)   one statement, returns the rows
 //   tx(async c => …)     several statements in one transaction (c.query(…))
 // Migrations: server/migrations/NNNN_name.sql, applied in order at start, each in its own
@@ -25425,7 +25429,7 @@ export async function close() { await pool?.end(); pool = null; }
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/http.mjs" <<'__FLEETPILOT_FILE_END__'
-// HTTP for the app server (blueprint 1.1.0): routes for the API, the web app
+// HTTP for the app server (blueprint 1.1.1): routes for the API, the web app
 // from the web folder, /healthz and /site.json, with the same headers in every deployment.
 //
 //   app.get('/api/items', async ctx => rows)            → 200 with JSON
@@ -25557,7 +25561,7 @@ function serveFile(req, res, pathname) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/log.mjs" <<'__FLEETPILOT_FILE_END__'
-// Logs of the app server (blueprint 1.1.0): one JSON object per line on stdout,
+// Logs of the app server (blueprint 1.1.1): one JSON object per line on stdout,
 // readable by journalctl, docker logs and kubectl logs alike.
 import { config } from './config.mjs';
 
@@ -25577,7 +25581,7 @@ export const log = {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/server.mjs" <<'__FLEETPILOT_FILE_END__'
-// Start of the app server (blueprint 1.1.0): database, migrations, routes, HTTP,
+// Start of the app server (blueprint 1.1.1): database, migrations, routes, HTTP,
 // and a clean stop on SIGTERM (systemd, Docker and Kubernetes all send it).
 //   start({ routes: [items, …] })   every route module is a function (app) => { app.get(…) }
 //   start({ routes, onStart, onStop })   onStart() after migrations and listening (workers of the
@@ -25787,7 +25791,7 @@ export async function runPlaybook({ plays, hosts, check = false, diff = true, si
     fs.writeFileSync(path.join(dir, 'inventory.yml'), toYaml(inv), { mode: 0o600 });
     // su (during a take-over) keeps the PATH of the login user: tools in /usr/sbin must be found
     const PATH = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
-    fs.writeFileSync(path.join(dir, 'playbook.yml'), toYaml(plays.map(p => ({ ...p, environment: { PATH, ...(p.environment || {}) } }))), { mode: 0o600 });
+    fs.writeFileSync(path.join(dir, 'playbook.yml'), toYaml(plays.map(p => (p.environment === false ? (({ environment, ...rest }) => rest)(p) : { ...p, environment: { PATH, ...(p.environment || {}) } }))), { mode: 0o600 });
     fs.writeFileSync(path.join(dir, 'known_hosts'), knownHosts(hosts, hostCaPublic), { mode: 0o600 });
     fs.writeFileSync(path.join(dir, 'ansible.cfg'), [
       '[defaults]',
@@ -25844,7 +25848,7 @@ export async function runPlaybook({ plays, hosts, check = false, diff = true, si
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/lib"
   cat > "$W/server/lib/audit.mjs" <<'__FLEETPILOT_FILE_END__'
-// Library element "audit" (blueprint 1.1.0): who did what, when and from where.
+// Library element "audit" (blueprint 1.1.1): who did what, when and from where.
 //
 //   import { audit, record } from './lib/audit.mjs'
 //   await start({ routes: [auth({ onEvent: record }), audit(), items] })
@@ -25905,7 +25909,7 @@ export function audit({ can = ctx => ctx.user?.isAdmin, retentionDays = 400 } = 
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/lib"
   cat > "$W/server/lib/auth.mjs" <<'__FLEETPILOT_FILE_END__'
-// Library element "auth" (blueprint 1.1.0): sign-in and accounts.
+// Library element "auth" (blueprint 1.1.1): sign-in and accounts.
 // Passwords hashed with scrypt, sessions in PostgreSQL behind an HttpOnly cookie, a password
 // policy, two-factor sign-in with TOTP and recovery codes, lockouts and rate limits, and the
 // first administrator created with a setup code. See .blueprint/library/auth/README.md.
@@ -28252,7 +28256,7 @@ export async function assign(ip, hostId, hostname, { note = '' } = {}) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/lib"
   cat > "$W/server/lib/jobs.mjs" <<'__FLEETPILOT_FILE_END__'
-// Library element "jobs" (blueprint 1.1.0): background work in a PostgreSQL queue.
+// Library element "jobs" (blueprint 1.1.1): background work in a PostgreSQL queue.
 // Every replica runs workers; a job is taken by exactly one of them (FOR UPDATE SKIP LOCKED),
 // new jobs wake the workers at once (LISTEN/NOTIFY), a job whose worker died is taken again.
 //
@@ -29019,12 +29023,16 @@ export function defineRunJobs({ resolveTargets }) {
     if (!hostIds.length) return { skipped: 'no hosts' };
     return { run: await startRun({ workflow: wf, hostIds, trigger: 'schedule' }) };
   });
-  jobs.define('runs.prune', async () => ({ removed: (await query("delete from runs where finished_at < now() - interval '180 days' returning id")).length }));
+  jobs.define('runs.prune', async () => {
+    const { getSetting } = await import('../api/settings.mjs');
+    const days = Number(await getSetting('runs.keep_days')) || 180;
+    return { removed: (await query('delete from runs where finished_at < now() - make_interval(days => $1) returning id', [days])).length };
+  });
 }
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/lib"
   cat > "$W/server/lib/secrets.mjs" <<'__FLEETPILOT_FILE_END__'
-// Library element "secrets" (blueprint 1.1.0): sensitive values encrypted at rest
+// Library element "secrets" (blueprint 1.1.1): sensitive values encrypted at rest
 // with AES-256-GCM and a key that lives outside the database (spec/12-library.md, secrets).
 //
 //   import { secrets, setupSecrets } from './lib/secrets.mjs'
@@ -29418,8 +29426,8 @@ export const STEPS = [
       // Python for Ansible, with raw commands (works without Python)
       const r = await ctx.ansible({
         hosts: ready,
-        plays: [{ name: 'Prepare the host for Ansible', hosts: 'all', gather_facts: false, become: true, tasks: [
-          { name: 'Install Python when it is missing', 'ansible.builtin.raw': 'command -v python3 >/dev/null 2>&1 || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 >/dev/null) && echo ready', changed_when: false },
+        plays: [{ name: 'Prepare the host for Ansible', hosts: 'all', gather_facts: false, become: true, environment: false, tasks: [
+          { name: 'Install Python when it is missing', 'ansible.builtin.raw': 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH; command -v python3 >/dev/null 2>&1 || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 >/dev/null) && echo ready', changed_when: false },
           { name: 'Check that Ansible works', 'ansible.builtin.ping': {} }
         ] }]
       });

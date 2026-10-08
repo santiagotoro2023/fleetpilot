@@ -42,20 +42,21 @@ echo "Testing ${SCRIPT} ($(sed -n 's/^APP_VERSION="\(.*\)"$/\1/p' "$SCRIPT")) on
 get()  { vm "curl -kfsS --max-time 10 'https://127.0.0.1:${1}${2}'"; }
 fingerprint() { vm "openssl x509 -in /opt/@@APP_ID@@/tls/@@APP_ID@@.crt -noout -fingerprint -sha256"; }
 
-# 1. Fresh install on a custom port
-vm "bash /root/$SCRIPT --port 8443" > /tmp/$NAME.log 2>&1 || { cat /tmp/$NAME.log; fail "install"; }
+# 1. Fresh install on a custom port (one that is not the default of @@APP_NAME@@)
+P=8443; [ "@@APP_PORT@@" = "8443" ] && P=9443
+vm "bash /root/$SCRIPT --port $P" > /tmp/$NAME.log 2>&1 || { cat /tmp/$NAME.log; fail "install"; }
 ok "install"
 @@IF lib:auth@@
 grep -A1 "create the first administrator with this setup code" /tmp/$NAME.log | tail -1 | grep -Eq '^ +[0-9a-f]{6}-[0-9a-f]{6}-[0-9a-f]{6}$' || { cat /tmp/$NAME.log; fail "the installer shows the setup code"; }
 ok "the installer shows the setup code of the first administrator"
 @@END@@
-get 8443 / | grep '<nav class="rail"' >/dev/null || fail "the app answers over HTTPS"
-ok "the app answers over HTTPS on port 8443"
-get 8443 /site.json | grep '"version": *"' >/dev/null || fail "site.json"
+get $P / | grep '<nav class="rail"' >/dev/null || fail "the app answers over HTTPS"
+ok "the app answers over HTTPS on port $P"
+get $P /site.json | grep '"version": *"' >/dev/null || fail "site.json"
 ok "site.json"
-get 8443 /healthz >/dev/null || fail "/healthz"
+get $P /healthz >/dev/null || fail "/healthz"
 ok "/healthz"
-vm "curl -sS --max-time 5 http://127.0.0.1:8443/ | grep 'moved to HTTPS\|migrate' >/dev/null" || fail "plain HTTP on the HTTPS port gets the move page"
+vm "curl -sS --max-time 5 http://127.0.0.1:$P/ | grep 'moved to HTTPS\|migrate' >/dev/null" || fail "plain HTTP on the HTTPS port gets the move page"
 ok "plain HTTP on the HTTPS port gets the move page"
 fp="$(fingerprint)"
 vm "test -x /opt/@@APP_ID@@/@@APP_ID@@-install.sh" || fail "a copy of the script for later runs"
@@ -63,7 +64,7 @@ ok "a copy of the script in /opt/@@APP_ID@@"
 
 # 2. Running it again keeps port, certificate and options
 vm "bash /opt/@@APP_ID@@/@@APP_ID@@-install.sh --no-move-card" > /tmp/$NAME.log 2>&1 || { cat /tmp/$NAME.log; fail "second run"; }
-grep -q "Keeping previous port 8443" /tmp/$NAME.log || fail "the port is kept"
+grep -q "Keeping previous port $P" /tmp/$NAME.log || fail "the port is kept"
 ok "the port is kept"
 [ "$(fingerprint)" = "$fp" ] || fail "the certificate is kept"
 ok "the certificate is kept"
@@ -72,20 +73,20 @@ ok "--no-move-card is saved"
 
 # 3. A new address shows the move card, --not-moved removes it
 vm "bash /opt/@@APP_ID@@/@@APP_ID@@-install.sh --moved-to https://new.example.com" >/dev/null 2>&1 || fail "--moved-to"
-get 8443 /site.json | grep '"canonical": *"https://new.example.com"' >/dev/null || fail "--moved-to sets the address in site.json"
+get $P /site.json | grep '"canonical": *"https://new.example.com"' >/dev/null || fail "--moved-to sets the address in site.json"
 ok "--moved-to sets the address in site.json"
 vm "bash /opt/@@APP_ID@@/@@APP_ID@@-install.sh --not-moved" >/dev/null 2>&1 || fail "--not-moved"
-get 8443 /site.json | grep canonical >/dev/null && fail "--not-moved removes it"
+get $P /site.json | grep canonical >/dev/null && fail "--not-moved removes it"
 ok "--not-moved removes it"
 vm "bash /root/$SCRIPT --moved-to https://bad.example.com/path" >/dev/null 2>&1 && fail "an address with a path is refused"
 ok "an address with a path is refused"
 
 # 4. Plain HTTP and back
 vm "bash /opt/@@APP_ID@@/@@APP_ID@@-install.sh --http" >/dev/null 2>&1 || fail "--http"
-vm "curl -fsS --max-time 5 http://127.0.0.1:8443/healthz" >/dev/null || fail "--http serves plain HTTP"
+vm "curl -fsS --max-time 5 http://127.0.0.1:$P/healthz" >/dev/null || fail "--http serves plain HTTP"
 ok "--http serves plain HTTP"
 vm "bash /opt/@@APP_ID@@/@@APP_ID@@-install.sh --https" >/dev/null 2>&1 || fail "--https"
-get 8443 /healthz >/dev/null || fail "--https serves HTTPS again"
+get $P /healthz >/dev/null || fail "--https serves HTTPS again"
 ok "--https serves HTTPS again"
 @@IF server@@
 
@@ -115,7 +116,7 @@ vm "runuser -u postgres -- psql -d @@APP_ID@@ -Atqc 'delete from installer_test'
 vm "bash /opt/@@APP_ID@@/@@APP_ID@@-install.sh --restore '$backup'" > /tmp/$NAME.log 2>&1 || { cat /tmp/$NAME.log; fail "--restore"; }
 [ "$(vm "runuser -u postgres -- psql -d @@APP_ID@@ -Atqc 'select v from installer_test'")" = "before" ] || fail "--restore brings the data back"
 ok "--restore brings the data back"
-get 8443 /healthz >/dev/null || fail "the app runs after the restore"
+get $P /healthz >/dev/null || fail "the app runs after the restore"
 ok "the app runs after the restore"
 vm "bash /opt/@@APP_ID@@/@@APP_ID@@-install.sh" > /tmp/$NAME.log 2>&1 || fail "update"
 grep -q "Backing up the database before the update" /tmp/$NAME.log || fail "a backup before every update"
@@ -131,7 +132,7 @@ ok "--list-backups"
 # 6. Uninstall
 vm "bash /opt/@@APP_ID@@/@@APP_ID@@-install.sh --uninstall" >/dev/null 2>&1 || fail "--uninstall"
 vm "test ! -e /opt/@@APP_ID@@ && test ! -e /etc/nginx/sites-enabled/@@APP_ID@@" || fail "--uninstall removes the app"
-vm "curl -kfsS --max-time 5 https://127.0.0.1:8443/" >/dev/null 2>&1 && fail "nothing answers after --uninstall"
+vm "curl -kfsS --max-time 5 https://127.0.0.1:$P/" >/dev/null 2>&1 && fail "nothing answers after --uninstall"
 ok "--uninstall removes the app"
 @@IF server@@
 [ "$(vm "runuser -u postgres -- psql -d @@APP_ID@@ -Atqc 'select v from installer_test'")" = "before" ] || fail "--uninstall keeps the database"
@@ -141,7 +142,7 @@ ok "--uninstall keeps the database"
 ok "--uninstall keeps the key"
 @@END@@
 vm "bash /root/$SCRIPT" >/dev/null 2>&1 || fail "install again"
-get 8080 /healthz >/dev/null || fail "a new install uses the kept database"
+get @@APP_PORT@@ /healthz >/dev/null || fail "a new install uses the kept database"
 ok "a new install uses the kept database"
 vm "bash /opt/@@APP_ID@@/@@APP_ID@@-install.sh --uninstall --purge" >/dev/null 2>&1 || fail "--uninstall --purge"
 vm "runuser -u postgres -- psql -Atqc \"select count(*) from pg_database where datname = '@@APP_ID@@'\"" | grep -x 0 >/dev/null || fail "--purge deletes the database"
@@ -156,7 +157,7 @@ ok "--uninstall --purge deletes database and backups"
 if [ -n "$PREVIOUS" ] && [ -s "$PREVIOUS" ]; then
   docker cp "$PREVIOUS" "$NAME:/root/previous-install.sh"
   prev="$(sed -n 's/^APP_VERSION="\(.*\)"$/\1/p; s/^PP_VERSION="\(.*\)"$/\1/p' "$PREVIOUS" | head -1)"
-  vm "bash /root/previous-install.sh --port 8443 --no-move-card" > /tmp/$NAME.log 2>&1 || { cat /tmp/$NAME.log; fail "install the previous release ${prev}"; }
+  vm "bash /root/previous-install.sh --port $P --no-move-card" > /tmp/$NAME.log 2>&1 || { cat /tmp/$NAME.log; fail "install the previous release ${prev}"; }
   ok "previous release ${prev} installed"
   fp="$(fingerprint)"
 @@IF server@@
@@ -164,12 +165,12 @@ if [ -n "$PREVIOUS" ] && [ -s "$PREVIOUS" ]; then
 @@END@@
   vm "bash /root/$SCRIPT" > /tmp/$NAME.log 2>&1 || { cat /tmp/$NAME.log; fail "update from ${prev}"; }
   ok "update from ${prev} to the new version"
-  grep -q "Keeping previous port 8443" /tmp/$NAME.log || fail "the update keeps the port"
+  grep -q "Keeping previous port $P" /tmp/$NAME.log || fail "the update keeps the port"
   [ "$(fingerprint)" = "$fp" ] || fail "the update keeps the certificate"
   vm "grep -q '^MOVE_CARD=no' /opt/@@APP_ID@@/@@APP_ID@@.conf" || fail "the update keeps --no-move-card"
   new_version="$(sed -n 's/^APP_VERSION="\(.*\)"$/\1/p' "$SCRIPT")"
-  get 8443 /site.json | grep "\"version\": *\"${new_version}\"" >/dev/null || fail "the new version runs after the update"
-  get 8443 / | grep '<nav class="rail"' >/dev/null || fail "the app answers after the update"
+  get $P /site.json | grep "\"version\": *\"${new_version}\"" >/dev/null || fail "the new version runs after the update"
+  get $P / | grep '<nav class="rail"' >/dev/null || fail "the app answers after the update"
 @@IF server@@
   [ "$(vm "runuser -u postgres -- psql -d @@APP_ID@@ -Atqc 'select v from upgrade_test'")" = "kept" ] || fail "the update keeps the data"
 @@END@@

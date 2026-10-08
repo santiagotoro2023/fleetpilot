@@ -1,5 +1,5 @@
 // Facts about this installation (site.json, written by the installer, the container or
-// the app server) and moving a user's data between addresses (blueprint 1.1.0).
+// the app server) and moving a user's data between addresses (blueprint 1.1.1).
 // Browser data lives per address, so when a server gets a new main address, users take
 // their data along with one click.
 import { h, toast } from './ui.js';

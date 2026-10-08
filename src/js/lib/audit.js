@@ -1,4 +1,4 @@
-// Library element "audit" (blueprint 1.1.0): the audit log as a searchable table.
+// Library element "audit" (blueprint 1.1.1): the audit log as a searchable table.
 //   import { auditView } from './lib/audit.js'
 //   auditView(container, { label: action => 'Signed in' })   label() may name the app's own actions
 import { h, toast } from '../core/ui.js';

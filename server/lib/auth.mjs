@@ -1,4 +1,4 @@
-// Library element "auth" (blueprint 1.1.0): sign-in and accounts.
+// Library element "auth" (blueprint 1.1.1): sign-in and accounts.
 // Passwords hashed with scrypt, sessions in PostgreSQL behind an HttpOnly cookie, a password
 // policy, two-factor sign-in with TOTP and recovery codes, lockouts and rate limits, and the
 // first administrator created with a setup code. See .blueprint/library/auth/README.md.

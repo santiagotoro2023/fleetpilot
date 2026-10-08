@@ -1,4 +1,4 @@
-// Blueprint 1.1.0: the shell of FleetPilot looks and behaves exactly as the
+// Blueprint 1.1.1: the shell of FleetPilot looks and behaves exactly as the
 // specification says (.blueprint/spec/01-design.md). The same test runs in every project.
 import assert from 'node:assert/strict';
 import { open, box, BASE } from '../lib/browser.mjs';

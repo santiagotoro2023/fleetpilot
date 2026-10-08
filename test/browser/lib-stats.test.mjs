@@ -1,4 +1,4 @@
-// Library element "stats" (blueprint 1.1.0): renders with the design tokens in this app.
+// Library element "stats" (blueprint 1.1.1): renders with the design tokens in this app.
 import assert from 'node:assert/strict';
 import { open } from '../lib/browser.mjs';
 

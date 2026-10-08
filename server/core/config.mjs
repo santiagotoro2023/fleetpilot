@@ -1,4 +1,4 @@
-// Configuration of the app server (blueprint 1.1.0): only environment variables,
+// Configuration of the app server (blueprint 1.1.1): only environment variables,
 // all named FLEETPILOT_*, the same in every deployment (installer, Docker, Kubernetes).
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

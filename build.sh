@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds fleetpilot-install.sh, the one-file installer, from src/
 # and server/ with its production dependencies,
-# after writing every blueprint file from project.conf and VERSION (blueprint 1.1.0).
+# after writing every blueprint file from project.conf and VERSION (blueprint 1.1.1).
 #   bash build.sh            render, build, check
 set -euo pipefail
 cd "$(dirname "$0")"

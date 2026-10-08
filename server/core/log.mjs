@@ -1,4 +1,4 @@
-// Logs of the app server (blueprint 1.1.0): one JSON object per line on stdout,
+// Logs of the app server (blueprint 1.1.1): one JSON object per line on stdout,
 // readable by journalctl, docker logs and kubectl logs alike.
 import { config } from './config.mjs';
 

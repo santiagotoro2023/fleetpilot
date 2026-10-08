@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  FleetPilot 0.1.0
+#  FleetPilot 1.0.0
 #  Run every Linux host in your datacenter from one place.
 #
 #  Installs FleetPilot on Debian 12 (Bookworm) or 13 (Trixie):
@@ -52,10 +52,10 @@
 # =============================================================================
 set -euo pipefail
 
-# Made from blueprint 1.1.0 (https://github.com/santiagotoro2023/project-blueprint)
+# Made from blueprint 1.1.1 (https://github.com/santiagotoro2023/project-blueprint)
 APP_ID="fleetpilot"
 APP_NAME="FleetPilot"
-APP_VERSION="0.1.0"
+APP_VERSION="1.0.0"
 APP_PROFILE="server"
 APP_PORT="8443"
 APP_ROOT="/opt/${APP_ID}"

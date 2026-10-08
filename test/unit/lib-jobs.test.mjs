@@ -1,4 +1,4 @@
-// Library element "jobs" (blueprint 1.1.0): schedules, the queue, retries, cancelling,
+// Library element "jobs" (blueprint 1.1.1): schedules, the queue, retries, cancelling,
 // recovery after a stopped worker, with the test database of test/run.mjs.
 import assert from 'node:assert/strict';
 import { jobs, startJobs, stopJobs, nextRun, parseCron } from '../../server/lib/jobs.mjs';

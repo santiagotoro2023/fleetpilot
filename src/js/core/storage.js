@@ -1,4 +1,4 @@
-// Storage in the browser for FleetPilot (blueprint 1.1.0).
+// Storage in the browser for FleetPilot (blueprint 1.1.1).
 // One key, fleetpilot.v1, holds everything. Its shape only ever grows: new fields get
 // defaults, nothing is renamed, so an update never loses what a user did.
 // The project describes its data (src/js/store.js): createStore() does the rest.

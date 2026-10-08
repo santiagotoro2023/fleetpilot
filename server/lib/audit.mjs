@@ -1,4 +1,4 @@
-// Library element "audit" (blueprint 1.1.0): who did what, when and from where.
+// Library element "audit" (blueprint 1.1.1): who did what, when and from where.
 //
 //   import { audit, record } from './lib/audit.mjs'
 //   await start({ routes: [auth({ onEvent: record }), audit(), items] })

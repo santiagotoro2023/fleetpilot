@@ -74,8 +74,8 @@ export const STEPS = [
       // Python for Ansible, with raw commands (works without Python)
       const r = await ctx.ansible({
         hosts: ready,
-        plays: [{ name: 'Prepare the host for Ansible', hosts: 'all', gather_facts: false, become: true, tasks: [
-          { name: 'Install Python when it is missing', 'ansible.builtin.raw': 'command -v python3 >/dev/null 2>&1 || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 >/dev/null) && echo ready', changed_when: false },
+        plays: [{ name: 'Prepare the host for Ansible', hosts: 'all', gather_facts: false, become: true, environment: false, tasks: [
+          { name: 'Install Python when it is missing', 'ansible.builtin.raw': 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH; command -v python3 >/dev/null 2>&1 || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 >/dev/null) && echo ready', changed_when: false },
           { name: 'Check that Ansible works', 'ansible.builtin.ping': {} }
         ] }]
       });

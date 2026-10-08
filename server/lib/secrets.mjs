@@ -1,4 +1,4 @@
-// Library element "secrets" (blueprint 1.1.0): sensitive values encrypted at rest
+// Library element "secrets" (blueprint 1.1.1): sensitive values encrypted at rest
 // with AES-256-GCM and a key that lives outside the database (spec/12-library.md, secrets).
 //
 //   import { secrets, setupSecrets } from './lib/secrets.mjs'

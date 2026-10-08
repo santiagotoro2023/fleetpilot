@@ -1,4 +1,4 @@
-// The app shell of every blueprint project (blueprint 1.1.0): theme switch,
+// The app shell of every blueprint project (blueprint 1.1.1): theme switch,
 // the active menu entry, the move card and the start of the hash router.
 import { toast } from './ui.js';
 import { I } from './icons.js';

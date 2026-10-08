@@ -70,11 +70,12 @@ export async function viewWorkflow(ctx, id) {
     const cron = input({ mono: true, value: d.trigger.cron || '30 2 * * *', disabled: ro, placeholder: 'minute hour day month weekday' });
     const cronSays = h('span', { class: 'fp-help' });
     const cronBox = h('div', { class: 'fp-cron' }, field('Schedule (UTC)', cron), cronSays, h('div', { class: 'row' }, PRESETS.map(([c, t]) => h('button', { type: 'button', class: 'btn ghost fp-preset', disabled: ro, onclick: () => { cron.value = c; setCron(); } }, t))));
-    const setCron = () => { d.trigger.cron = cron.value.trim(); cronSays.textContent = cronText(d.trigger.cron) === d.trigger.cron ? 'Five fields: minute, hour, day of month, month, weekday.' : `Runs ${cronText(d.trigger.cron)}.`; markDirty(); };
+    const sayCron = () => { cronSays.textContent = cronText(d.trigger.cron) === d.trigger.cron ? 'Five fields: minute, hour, day of month, month, weekday.' : `Runs ${cronText(d.trigger.cron)}.`; };
+    const setCron = () => { d.trigger.cron = cron.value.trim(); sayCron(); markDirty(); };
     cron.addEventListener('input', setCron);
-    cronSays.textContent = d.trigger.cron ? `Runs ${cronText(d.trigger.cron)}.` : '';
+    if (d.trigger.cron) sayCron();
     const showCron = () => cronBox.classList.toggle('hidden', d.trigger.type !== 'schedule');
-    trig.addEventListener('change', () => { d.trigger.type = trig.value; if (trig.value === 'schedule' && !d.trigger.cron) d.trigger.cron = cron.value.trim(); showCron(); markDirty(); });
+    trig.addEventListener('change', () => { d.trigger.type = trig.value; if (trig.value === 'schedule' && !d.trigger.cron) { d.trigger.cron = cron.value.trim(); sayCron(); } showCron(); markDirty(); });
     showCron();
     const gsel = h('select', { class: 'input', multiple: true, size: Math.min(6, Math.max(3, groups.length)), disabled: ro, onchange: e => { d.targets.groups = [...e.target.selectedOptions].map(o => o.value); markDirty(); } },
       groups.map(([v, n]) => h('option', { value: v, selected: d.targets.groups.map(String).includes(String(v)) }, n)));

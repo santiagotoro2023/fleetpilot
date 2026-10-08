@@ -10,7 +10,7 @@ import { main, meta, get, call, can, pageHead, btn, tabs, dialog, field, input, 
 import { revealSecret } from './hosts.js';
 
 const AUDIT_LABELS = {
-  'host.added': 'Added hosts', 'host.changed': 'Changed a host', 'host.deleted': 'Removed a host', 'hosts.bulk': 'Changed many hosts',
+  'host.added': 'Added hosts', 'host.changed': 'Changed a host', 'host.removed': 'Removed a host', 'host.bulk_move': 'Moved hosts', 'host.bulk_tag': 'Tagged hosts', 'host.bulk_untag': 'Removed tags from hosts', 'host.bulk_retire': 'Retired hosts', 'host.bulk_activate': 'Brought hosts back',
   'group.created': 'Added a group', 'group.changed': 'Changed a group', 'group.deleted': 'Deleted a group',
   'template.created': 'Created a template', 'template.saved': 'Saved a template version', 'template.changed': 'Changed a template', 'template.deleted': 'Deleted a template',
   'template.assigned': 'Applied a template', 'template.unassigned': 'Removed a template',

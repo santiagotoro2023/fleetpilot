@@ -1,4 +1,4 @@
-// Calls to the API of the app server (blueprint 1.1.0).
+// Calls to the API of the app server (blueprint 1.1.1).
 //   const items = await api.get('/api/items')
 //   await api.post('/api/items', { title: 'New' })
 // Errors arrive as Error with the server's message (show it with toast(e.message)).
