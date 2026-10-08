@@ -223,7 +223,7 @@ export default function network(app) {
   app.post('/api/network/next', async ctx => {
     const b = ctx.body || {};
     await need(ctx, 'network', b.reserve ? 'change' : 'view');
-    const live = await getSetting('network.liveCheck');
+    const live = await getSetting('network.live_check');
     const r = await nextFree({ poolId: isId(b.poolId) ? b.poolId : null, subnetId: isId(b.subnetId) ? b.subnetId : null, liveCheck: live, claim: null, skip: Math.min(1000, Number(b.skip) || 0) });
     if (b.reserve) {
       await query("insert into addresses (subnet_id, ip, state, hostname, note) values ($1, $2, 'reserved', $3, $4)", [r.subnetId, r.ip, str(b.hostname, 253), str(b.note, 500) || `Reserved by ${ctx.user.username}`]);
@@ -234,7 +234,7 @@ export default function network(app) {
 
   app.post('/api/network/check', async ctx => {
     await need(ctx, 'network', 'view');
-    return checkAddress(str(ctx.body?.ip, 45), { live: await getSetting('network.liveCheck') });
+    return checkAddress(str(ctx.body?.ip, 45), { live: await getSetting('network.live_check') });
   });
 
   app.post('/api/network/subnets/:id/scan', async ctx => {

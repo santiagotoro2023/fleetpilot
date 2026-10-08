@@ -105,7 +105,7 @@ export default function vault(app) {
     const pubKey = str(ctx.body?.publicKey, 4000).trim();
     if (!/^(ssh-ed25519|ecdsa-sha2-nistp\d+|ssh-rsa) [A-Za-z0-9+/=]+( .*)?$/.test(pubKey)) throw httpError(400, 'bad_key', 'Paste your public key (one line, ssh-ed25519 AAAA…).');
     const hours = Math.min(24, Math.max(1, Math.round(Number(ctx.body?.hours) || 1)));
-    await requireFresh(ctx, await getSetting('vault.revealMinutes'));
+    await requireFresh(ctx, await getSetting('vault.reveal_minutes'));
     const ca = await userCa();
     const certificate = await signKey({ caPrivateKey: ca.data.privateKey, publicKey: pubKey, identity: `${ctx.user.username}@fleetpilot`, principals: [`fp-${ctx.user.username}`], validity: `+${hours}h` });
     await record(ctx, 'ssh_certificate.issued', { target: { type: 'user', id: ctx.user.id, name: ctx.user.username }, hours });
@@ -134,7 +134,7 @@ export default function vault(app) {
   app.post('/api/vault/:id/reveal', async ctx => {
     const s = await load(ctx, ctx.params.id, 'reveal');
     if (s.scope === 'system' && !ctx.user.isAdmin) throw httpError(403, 'not_allowed', 'Only administrators can show FleetPilot\'s own keys.');
-    await requireFresh(ctx, await getSetting('vault.revealMinutes'));
+    await requireFresh(ctx, await getSetting('vault.reveal_minutes'));
     let data;
     const v = ctx.body?.version;
     if (isId(v) && Number(v) !== s.version) {

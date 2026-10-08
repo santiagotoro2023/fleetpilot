@@ -82,6 +82,10 @@
     {
       "file": "0001_items.sql",
       "sha256": "31b2e1a5446ecf8e73936540ad63280012abd72a0ac051dda0f032491f89106e"
+    },
+    {
+      "file": "0002_fleet.sql",
+      "sha256": "e261b3781ed456828bd371ef0c03a0a39dada2cd1a5a5bfa0064b8beb2313e41"
     }
   ]
 }

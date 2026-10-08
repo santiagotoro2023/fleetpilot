@@ -65,7 +65,7 @@ export default function runs(app) {
     const r = await loadRun(ctx, ctx.params.id);
     await flushLog();
     const after = isId(ctx.query.after) ? ctx.query.after : '0';
-    const rows = await query(`select id::text, at, step, host, level, line from run_logs where run_id = $1 and id > $2 ${ctx.query.host ? 'and host = $3' : ''} order by id limit 2000`,
+    const rows = await query(`select id::text, at, step, host, level, line from run_logs where run_id = $1 and id > $2 ${ctx.query.host ? 'and host = $3' : ''} order by run_logs.id limit 2000`,
       ctx.query.host ? [r.id, after, String(ctx.query.host)] : [r.id, after]);
     return { status: r.status, lines: rows };
   });

@@ -7,17 +7,17 @@ import { record } from '../lib/audit.mjs';
 
 export const DEFAULTS = {
   'runs.concurrency': 4,          // runs at the same time per FleetPilot server
-  'runs.keepDays': 180,           // finished runs are removed after so many days
-  'hosts.autoTakeover': false,    // reserved: take-over workflows with the trigger "host added" decide
-  'network.liveCheck': true,      // probe an address before it is handed out
-  'vault.revealMinutes': 5        // how long a confirmation lasts for showing secrets
+  'runs.keep_days': 180,           // finished runs are removed after so many days
+  'hosts.auto_takeover': false,    // reserved: take-over workflows with the trigger "host added" decide
+  'network.live_check': true,      // probe an address before it is handed out
+  'vault.reveal_minutes': 5        // how long a confirmation lasts for showing secrets
 };
 const RULES = {
   'runs.concurrency': v => Number.isInteger(v) && v >= 1 && v <= 64,
-  'runs.keepDays': v => Number.isInteger(v) && v >= 7 && v <= 3650,
-  'hosts.autoTakeover': v => typeof v === 'boolean',
-  'network.liveCheck': v => typeof v === 'boolean',
-  'vault.revealMinutes': v => Number.isInteger(v) && v >= 1 && v <= 60
+  'runs.keep_days': v => Number.isInteger(v) && v >= 7 && v <= 3650,
+  'hosts.auto_takeover': v => typeof v === 'boolean',
+  'network.live_check': v => typeof v === 'boolean',
+  'vault.reveal_minutes': v => Number.isInteger(v) && v >= 1 && v <= 60
 };
 
 export async function getSetting(key) {

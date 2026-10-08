@@ -348,5 +348,9 @@ export function defineRunJobs({ resolveTargets }) {
     if (!hostIds.length) return { skipped: 'no hosts' };
     return { run: await startRun({ workflow: wf, hostIds, trigger: 'schedule' }) };
   });
-  jobs.define('runs.prune', async () => ({ removed: (await query("delete from runs where finished_at < now() - interval '180 days' returning id")).length }));
+  jobs.define('runs.prune', async () => {
+    const { getSetting } = await import('../api/settings.mjs');
+    const days = Number(await getSetting('runs.keep_days')) || 180;
+    return { removed: (await query('delete from runs where finished_at < now() - make_interval(days => $1) returning id', [days])).length };
+  });
 }
