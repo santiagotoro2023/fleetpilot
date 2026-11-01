@@ -223,15 +223,17 @@ async function execute(job) {
                 secretVars: { ...(withSecrets && h.desired ? await secretVars(h, h.desired.merged) : {}), ...(sv ? sv(h) : {}) }
               });
             }
+            const stored = [];
             const r = await runPlaybook({
               plays, hosts: list, check, signal: job.signal, hostCaPublic: keys.hostCa,
               onEvent: e => {
                 const l = eventLine(e);
                 if (l) log(i, e.host || '', l[0], l[1]);
-                if (e.facts) storeFacts(e.host, e.facts).catch(() => {});
+                if (e.facts) stored.push(storeFacts(e.host, e.facts).catch(() => {}));
                 onEvent?.(e);
               }
             });
+            await Promise.all(stored);
             return r.results;
           }
         };

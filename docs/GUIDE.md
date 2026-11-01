@@ -77,6 +77,32 @@ start when hosts are added. The built-in take-over:
 The run page shows every host in every step and the live log. A host that fails keeps its place in
 the grid with the reason; *Again on the failed hosts* starts a new run for them only.
 
+### Servers that already run something
+
+Use **Take over a running server** for them, never "Take over a Debian host" (that one is for fresh
+installations: it renames the host, sets new passwords and turns off password logins). The careful
+take-over:
+
+1. logs in with the login from the vault (or the login kept for that host: Hosts → the host →
+   Secrets → Add a secret for this host, kind Login), becomes root and leaves FleetPilot's key;
+2. looks before it changes anything, and stops (and takes its key back) when the host has an
+   account `fleetpilot` that FleetPilot did not make (like the FleetPilot server itself) or when its
+   SSH server already trusts another certificate authority;
+3. creates the account `fleetpilot` with sudo, trusts FleetPilot's certificates for that account
+   only and gives the host a host certificate;
+4. reads the facts, and keeps the name the host calls itself (also in FleetPilot);
+5. checks the host against its desired state and lists what applying would change, without
+   changing it.
+
+Passwords, host name, password logins, firewall, packages and services stay as they are. Look at
+each host's *Desired state* tab before you apply anything to it, and give servers that already run
+something their own group with templates made for them: "Debian base" turns on a firewall that only
+lets SSH in, which would cut off services like a game server or a web app.
+
+Leave the FleetPilot server itself out of take-overs: FleetPilot refuses it, because its account
+`fleetpilot` is the one the app runs as. You can still add it as a host, to keep it in the inventory
+and its address in IP management.
+
 ## 6. Describe the desired state
 
 **Automate → New template.** *Add a setting* opens the catalog: search for what you need

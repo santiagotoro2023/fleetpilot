@@ -10,7 +10,7 @@ import { safeText, normalizeValues, AREAS } from '../../server/lib/catalog.mjs';
 import { TYPES, catalogForClient, normalizeDefinition, mergeDefinitions, playOf, previewPlaybook, stateHash, needsOf, portsOf } from '../../server/lib/compile.mjs';
 import { toYaml } from '../../server/lib/yaml.mjs';
 import { sha512crypt, derivedSalt } from '../../server/lib/crypt.mjs';
-import { STEPS, stepsForClient } from '../../server/lib/steps.mjs';
+import { STEPS, stepsForClient, enrollProblem } from '../../server/lib/steps.mjs';
 import { parseIp, formatIp, parseCidr, contains, usable } from '../../server/lib/ipam.mjs';
 import { normalizePermissions, BUILTIN_ROLES, AREAS as RIGHTS } from '../../server/lib/access.mjs';
 import { sampleValues } from './samples.mjs';
@@ -98,6 +98,19 @@ for (const s of STEPS) {
   ok(typeof s.run === 'function', `${s.id}: can run`);
 }
 ok(stepsForClient().every(s => !('run' in s)), 'the client gets no code');
+// When the take-over of a running server stops instead of changing anything
+const sshd = extra => `---\ntrustedusercakeys none\nauthorizedprincipalsfile none\nauthorizedprincipalscommand none${extra ? '\n' + extra : ''}`;
+eq(enrollProblem(sshd()), null, 'a plain server');
+eq(enrollProblem('fleetpilot:x:1001:1001:FleetPilot:/home/fleetpilot:/bin/bash\n' + sshd().replace('trustedusercakeys none', 'trustedusercakeys /etc/ssh/fleetpilot_user_ca.pub')), null, 'a server FleetPilot took over before');
+ok(/did not make it/.test(enrollProblem('fleetpilot:x:999:999::/nonexistent:/usr/sbin/nologin\n' + sshd())), 'the FleetPilot server itself');
+ok(/another certificate authority/.test(enrollProblem(sshd().replace('trustedusercakeys none', 'trustedusercakeys /etc/ssh/corp_ca.pub'))), 'a corporate CA');
+ok(/AuthorizedPrincipalsCommand/.test(enrollProblem(sshd().replace('authorizedprincipalscommand none', 'authorizedprincipalscommand /usr/bin/sss_ssh_authorizedkeys'))), 'principals from a command');
+ok(/AllowUsers/.test(enrollProblem(sshd('allowusers admin\nallowusers alice@10.0.0.0/8'))), 'AllowUsers without fleetpilot');
+eq(enrollProblem(sshd('allowusers admin\nallowusers fleetpilot')), null, 'AllowUsers with fleetpilot');
+eq(enrollProblem(sshd('allowusers *')), null, 'AllowUsers with a pattern for everyone');
+ok(/AllowGroups/.test(enrollProblem(sshd('allowgroups sshusers'))), 'AllowGroups without fleetpilot');
+ok(/DenyUsers/.test(enrollProblem(sshd('denyusers fleet*'))), 'DenyUsers matching fleetpilot');
+ok(/could not read/.test(enrollProblem('---\n')), 'sshd -T failed');
 eq(normalizePermissions({ hosts: 'manage', runs: 'everything' }).runs, 'none', 'unknown levels become none');
 ok(BUILTIN_ROLES.every(r => Object.keys(RIGHTS).every(a => RIGHTS[a].levels.includes(normalizePermissions(r.permissions)[a]))), 'built-in roles use known levels');
 

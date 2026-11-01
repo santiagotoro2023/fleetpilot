@@ -139,13 +139,18 @@ try {
 
   // ------------------------------------------------------------ Workflows
   const wfs = await call('GET', '/api/workflows', null, 200);
-  assert.deepEqual(wfs.map(w => w.builtin).filter(Boolean).sort(), ['apply', 'check', 'push', 'reboot', 'rotate', 'takeover', 'update']); n++;
+  assert.deepEqual(wfs.map(w => w.builtin).filter(Boolean).sort(), ['adopt', 'apply', 'check', 'push', 'reboot', 'rotate', 'takeover', 'update']); n++;
   assert.ok(wfs.every(w => w.steps.every(s => s.sentence)), 'every step says what it does'); n++;
+  assert.deepEqual(wfs.find(w => w.builtin === 'adopt').steps.map(s => s.type), ['connect', 'enroll', 'facts', 'check'], 'the take-over of running servers changes nothing but the access'); n++;
+  assert.match(wfs.find(w => w.builtin === 'takeover').description, /^For a fresh installation only/); n++;
   await call('DELETE', `/api/workflows/${wfs.find(w => w.builtin === 'apply').id}`, null, 409);
   await call('POST', '/api/workflows', { name: 'Wrong', kind: 'maintain', definition: { steps: [{ type: 'connect' }] } }, 400);
   await call('POST', '/api/workflows', { name: 'Bad schedule', kind: 'maintain', definition: { trigger: { type: 'schedule', cron: 'often' }, steps: [{ type: 'check' }] } }, 400);
   const take = await call('POST', '/api/workflows', { name: 'Take over the lab', kind: 'takeover', definition: { steps: [{ type: 'connect', values: { become: 'su' } }, { type: 'enroll' }] } }, 201);
-  await call('POST', `/api/workflows/${take.id}/run`, { hostIds: [dead] }, 400);
+  // Without a login in the step or for the host, the host fails with a reason (and nothing else runs)
+  const noLogin = await finished((await call('POST', `/api/workflows/${take.id}/run`, { hostIds: [dead] }, 201)).id);
+  assert.equal(noLogin.hosts[0].status, 'failed'); n++;
+  assert.ok((await call('GET', `/api/runs/${noLogin.id}/log?after=0`, null, 200)).lines.some(l => /No login to connect with/.test(l.line))); n++;
   take.definition.steps[0].values.credential = login.id;
   take.definition.targets = { groups: [web.id], tags: [] };
   const saved = await call('PUT', `/api/workflows/${take.id}`, { definition: take.definition }, 200);
@@ -186,7 +191,7 @@ try {
   assert.equal(appr.status, 'failed'); n++;
   await call('POST', `/api/runs/${w2.id}/approve`, {}, 409);
   assert.equal((await call('GET', `/api/runs?workflow=${careful.id}`, null, 200)).length, 2); n++;
-  assert.equal((await call('GET', `/api/runs?host=${dead}&status=failed`, null, 200)).length, 3); n++;
+  assert.equal((await call('GET', `/api/runs?host=${dead}&status=failed`, null, 200)).length, 4); n++;
 
   // ------------------------------------------------------------ Roles and accounts
   const roles = await call('GET', '/api/access/roles', null, 200);

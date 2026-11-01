@@ -70,8 +70,11 @@ an APP_PACKAGE). Server profile with the library elements auth, audit, jobs, sec
   types: the most specific wins, `collect` types: rows merged by their key.
 - **Migrations:** `0001_items.sql` is the template's example table, kept because a migration is never
   removed once the blueprint recorded it; FleetPilot's tables start with `0002_fleet.sql`.
+- **Taking over running servers** (`adopt` workflow) must never change more than FleetPilot's own access;
+  `enrollProblem()` in `steps.mjs` decides when the take-over stops instead. Proven by
+  `test/unit/takeover-running.test.mjs`.
 - **Tests:** `test/unit/fleet.test.mjs` covers the API; `test/unit/takeover.test.mjs` takes over a real
-  Debian 12 container (`test/e2e/debian12.Dockerfile`) and runs only with `FLEETPILOT_E2E=1` (Docker
+  Debian 12 container (`test/e2e/debian12.Dockerfile`) and, like `takeover-running.test.mjs`, runs only with `FLEETPILOT_E2E=1` (Docker
   and ansible-core needed). Run it before changing steps, the runner or Ansible handling.
 - **Planned:** network devices (Zyxel, FortiGate, Cisco) with VLANs and intent-based networking, more
   hypervisors, RHEL-family hosts (see README, "Planned").

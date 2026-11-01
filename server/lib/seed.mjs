@@ -10,7 +10,7 @@ import { normalizeWorkflow } from './runner.mjs';
 export const BUILTIN_WORKFLOWS = [
   {
     builtin: 'takeover', kind: 'takeover', name: 'Take over a Debian host',
-    description: 'For a fresh install with an SSH server: logs in with the login of the installation, makes FleetPilot the manager with certificates, sets new passwords and keys, turns off password logins and applies the desired state.',
+    description: 'For a fresh installation only (servers that already run something: "Take over a running server"): logs in with the login of the installation, makes FleetPilot the manager with certificates, sets new passwords and keys, turns off password logins and applies the desired state.',
     definition: { trigger: { type: 'manual' }, approval: 'role', steps: [
       { type: 'connect', values: { become: 'su' } },
       { type: 'enroll', values: { hostCert: true, removeBootstrap: true } },
@@ -20,6 +20,16 @@ export const BUILTIN_WORKFLOWS = [
       { type: 'keys', values: { users: ['root'], cert: true, days: 30 } },
       { type: 'nopasswords', values: { root: false } },
       { type: 'apply', values: {} }
+    ] }
+  },
+  {
+    builtin: 'adopt', kind: 'takeover', name: 'Take over a running server',
+    description: 'For servers that already run something: makes FleetPilot the manager and changes nothing else. No new passwords, no new host name, password logins stay as they are, no template is applied. At the end it shows what applying the desired state would change, without changing it.',
+    definition: { trigger: { type: 'manual' }, approval: 'role', steps: [
+      { type: 'connect', values: { become: 'su' } },
+      { type: 'enroll', values: { hostCert: true, removeBootstrap: true } },
+      { type: 'facts', values: { ownName: true } },
+      { type: 'check', values: {} }
     ] }
   },
   {
@@ -82,6 +92,9 @@ export async function seed() {
     for (const r of BUILTIN_ROLES) await query('insert into roles (name, description, permissions, builtin) values ($1, $2, $3, true) on conflict do nothing', [r.name, r.description, JSON.stringify(r.permissions)]);
     log.info('roles created', { roles: BUILTIN_ROLES.map(r => r.name) });
   }
+  // 1.1.0: the fresh-install take-over says that it is for fresh installations (unless someone changed the text)
+  await query("update workflows set description = $1 where builtin = 'takeover' and description = $2",
+    [BUILTIN_WORKFLOWS.find(w => w.builtin === 'takeover').description, 'For a fresh install with an SSH server: logs in with the login of the installation, makes FleetPilot the manager with certificates, sets new passwords and keys, turns off password logins and applies the desired state.']);
   for (const w of BUILTIN_WORKFLOWS) {
     if ((await query('select 1 from workflows where builtin = $1', [w.builtin])).length) continue;
     const def = normalizeWorkflow(w.kind, w.definition);

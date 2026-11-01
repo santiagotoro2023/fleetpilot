@@ -15,7 +15,8 @@ export async function runDialog(hostIds, { kind } = {}) {
   const hosts = (await get('/api/hosts')).filter(x => hostIds.includes(x.id));
   const managed = hosts.filter(x => x.state === 'managed' || x.state === 'unreachable').length;
   const wanted = kind || (managed === hosts.length ? 'maintain' : managed === 0 ? 'takeover' : null);
-  const list = all.filter(w => w.enabled && (!wanted || w.kind === wanted) && w.builtin !== 'push');
+  // The careful take-over first: it changes nothing on a host but FleetPilot's own access
+  const list = all.filter(w => w.enabled && (!wanted || w.kind === wanted) && w.builtin !== 'push').sort((a, b) => (b.builtin === 'adopt') - (a.builtin === 'adopt'));
   if (!list.length) { toast('There is no workflow for these hosts yet. Make one under Automate.'); return; }
   const wf = select(list.map(w => [w.id, `${w.name}${w.kind === 'takeover' ? ' (take-over)' : ''}`]), list[0].id);
   const info = h('div', { class: 'small muted fp-steps-preview' });
