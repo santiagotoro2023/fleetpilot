@@ -151,10 +151,7 @@ async function drawVault(body) {
       h('td', { class: 'fp-font' }, meta.vaultKinds[s.kind] || s.kind),
       h('td', {}, s.scope === 'host' ? h('a', { href: `#/hosts/${s.host_id}?tab=secrets` }, s.host_name || 'a host') : s.scope === 'group' ? `Group ${s.group_name || ''}` : SCOPES[s.scope]),
       h('td', {}, s.username || '–'), h('td', {}, String(s.version)), h('td', { class: 'muted' }, when(s.rotated_at || s.updated_at)),
-      h('td', { class: 'fp-actions-cell' },
-        can('vault', 'reveal') && (s.scope !== 'system' || meta.access.admin) ? btn('Show', 'eye', () => revealSecret(s), 'ghost') : null,
-        btn('History', '', () => history(s), 'ghost'),
-        can('vault', 'change') && s.scope !== 'system' ? btn('Change', '', async () => { if (await secretDialog({ secret: s })) load(); }, 'ghost') : null)))));
+      h('td', { class: 'fp-actions-cell' }, secretActions(s, load))))));
   };
   q.addEventListener('input', () => { clearTimeout(q._t); q._t = setTimeout(load, 250); });
   scope.addEventListener('change', load);
@@ -162,11 +159,29 @@ async function drawVault(body) {
     h('div', { class: 'row fp-toolbar' }, q, scope, can('vault', 'change') ? btn('Add a secret', 'plus', async () => { if (await secretDialog({ scope: 'global' })) load(); }, 'primary') : null), out);
   await load();
 
-  async function history(s) {
+}
+
+/** What one can do with a secret, wherever it is listed (the vault, a host): show, history, change, delete */
+export function secretActions(s, onChange) {
+  const mayShow = can('vault', 'reveal') && (s.scope !== 'system' || meta.access.admin);
+  const mayChange = can('vault', 'change') && s.scope !== 'system';
+  const history = async () => {
     const d = await get(`/api/vault/${s.id}`);
     await dialog(`History of ${s.name}`, [table(['Version', 'By', 'When', ''], d.versions.map(v => h('tr', {}, h('td', {}, String(v.version)), h('td', {}, v.created_by || ''), h('td', { class: 'muted' }, when(v.created_at)),
-      h('td', {}, can('vault', 'reveal') && (s.scope !== 'system' || meta.access.admin) ? btn('Show', 'eye', () => revealSecret(s, v.version === s.version ? undefined : v.version), 'ghost') : null))))]);
-  }
+      h('td', {}, mayShow ? btn('Show', 'eye', () => revealSecret(s, v.version === s.version ? undefined : v.version), 'ghost') : null))))]);
+  };
+  const remove = async () => {
+    const r = await dialog(`Delete ${s.name}`, [h('p', {}, `${s.host_name ? `The ${meta.vaultKinds[s.kind]?.toLowerCase() || 'secret'} of ${s.host_name}` : 'This secret'} and all its versions are deleted. This cannot be undone.`),
+      s.kind === 'login' || s.kind === 'password' ? h('p', { class: 'small muted' }, 'The password itself stays as it is wherever it is used: only FleetPilot forgets it.') : null],
+    { ok: 'Delete the secret', okClass: 'danger', onOk: () => call(() => api.del(`/api/vault/${s.id}`)) });
+    if (r) { forgetChoices(); toast(`${s.name} deleted`); onChange?.(); }
+  };
+  return [
+    mayShow ? btn('Show', 'eye', () => revealSecret(s), 'ghost') : null,
+    btn('History', '', history, 'ghost'),
+    mayChange ? btn('Change', '', async () => { if (await secretDialog({ secret: s })) onChange?.(); }, 'ghost') : null,
+    mayChange ? btn('Delete', 'trash', remove, 'ghost danger') : null
+  ].filter(Boolean);
 }
 
 /**
@@ -237,7 +252,7 @@ async function drawSsh(body) {
   const keyRow = (label, value, help) => h('div', { class: 'fp-keyrow' }, h('div', { class: 'row' }, h('b', {}, label), iconBtn(I.copy, `Copy ${label}`, () => { navigator.clipboard?.writeText(value); toast('Copied'); })),
     h('pre', { class: 'fp-pubkey' }, value), h('p', { class: 'small muted' }, help));
   body.append(h('h2', { class: 'fp-sec' }, 'How FleetPilot logs in'),
-    h('p', { class: 'muted small' }, 'The take-over logs in once with a password and leaves FleetPilot\'s key. Then it creates the user fleetpilot, trusts FleetPilot\'s user certificate authority and gives the host a host certificate. From then on every run logs in with a certificate that is valid for a few minutes only.'),
+    h('p', { class: 'muted small' }, 'The take-over logs in once with a password and leaves FleetPilot\'s key. Then it creates the account svc-fleetpilot, trusts FleetPilot\'s user certificate authority and gives the host a host certificate. From then on every run logs in with a certificate that is valid for a few minutes only.'),
     keyRow('FleetPilot\'s public key', k.fleetKey, 'Left on a host by the first login, removed after the take-over when the workflow says so.'),
     keyRow('User certificate authority', k.userCa, 'Hosts trust it for logins (TrustedUserCAKeys). Put it on hosts you set up yourself to let FleetPilot in.'),
     keyRow('Host certificate authority', k.hostCa, 'Signs the host keys of managed hosts. Add it to your known_hosts with "@cert-authority * " in front, and SSH never asks about host keys again.'));

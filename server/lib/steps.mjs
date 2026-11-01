@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { query } from '../core/db.mjs';
 import { httpError } from '../core/http.mjs';
-import { F, T, conf, safeText } from './catalog.mjs';
+import { ACCOUNT, F, T, conf, safeText } from './catalog.mjs';
 import { mergeDefinitions, playOf } from './compile.mjs';
 import { derivedSalt, sha512crypt } from './crypt.mjs';
 import { desiredState, groupPaths } from './hostctx.mjs';
@@ -28,14 +28,14 @@ async function playOnAll(ctx, play, { check = false, vars, onEvent, hosts = ctx.
 }
 
 /**
- * What stops the take-over of a host (from `getent passwd fleetpilot; echo ---; sshd -T | grep …`),
+ * What stops the take-over of a host (from `getent passwd svc-fleetpilot; echo ---; sshd -T | grep …`),
  * or null when FleetPilot may go ahead.
  */
-export function enrollProblem(out) {
+export function enrollProblem(out, { moving = false } = {}) {
   if (typeof out !== 'string') return 'FleetPilot could not look at the host before changing it.';
   const [account = '', sshd = ''] = out.split(/^---$/m);
-  const entry = account.trim().split('\n').find(l => l.startsWith('fleetpilot:'));
-  if (entry && entry.split(':')[4] !== 'FleetPilot') return 'An account fleetpilot exists here already, and FleetPilot did not make it (on the FleetPilot server itself it is the account the app runs as).';
+  const entry = account.trim().split('\n').find(l => l.startsWith(`${ACCOUNT}:`));
+  if (entry && entry.split(':')[4] !== 'FleetPilot') return `An account ${ACCOUNT} exists here already, and FleetPilot did not make it.`;
   const set = Object.fromEntries(sshd.trim().split('\n').filter(Boolean).map(l => { const [k, ...v] = l.trim().split(/\s+/); return [k.toLowerCase(), v.join(' ')]; }));
   if (!('trustedusercakeys' in set)) return 'FleetPilot could not read the settings of the SSH server (sshd -T).';
   if (!['none', '/etc/ssh/fleetpilot_user_ca.pub'].includes(set.trustedusercakeys)) return `The SSH server trusts another certificate authority already (TrustedUserCAKeys ${set.trustedusercakeys}).`;
@@ -43,10 +43,11 @@ export function enrollProblem(out) {
   if (set.authorizedprincipalscommand && set.authorizedprincipalscommand !== 'none') return `The SSH server asks a command for the principals of certificates (AuthorizedPrincipalsCommand ${set.authorizedprincipalscommand}).`;
   // sshd -T prints one line per entry of these lists; FleetPilot's account must be let in
   const list = key => sshd.split('\n').map(l => l.trim().split(/\s+/)).filter(([k]) => k?.toLowerCase() === key).flatMap(([, ...v]) => v.join(' ').split(/\s+/)).map(v => v.split('@')[0]).filter(Boolean);
-  const hits = l => l.some(p => new RegExp(`^${p.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`).test('fleetpilot'));
-  if (hits(list('denyusers')) || hits(list('denygroups'))) return 'The SSH server does not let the account fleetpilot in (DenyUsers or DenyGroups).';
-  if (list('allowusers').length && !hits(list('allowusers'))) return `The SSH server only lets these accounts in: ${list('allowusers').join(', ')} (AllowUsers). Add fleetpilot there first.`;
-  if (list('allowgroups').length && !hits(list('allowgroups'))) return `The SSH server only lets these groups in: ${list('allowgroups').join(', ')} (AllowGroups). Add the group fleetpilot there first.`;
+  const hits = l => l.some(p => new RegExp(`^${p.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`).test(ACCOUNT));
+  if (hits(list('denyusers')) || hits(list('denygroups'))) return `The SSH server does not let the account ${ACCOUNT} in (DenyUsers or DenyGroups).`;
+  // A host FleetPilot took over as fleetpilot: its AllowUsers names that account, and the take-over moves it
+  if (list('allowusers').length && !hits(list('allowusers')) && !(moving && list('allowusers').includes('fleetpilot'))) return `The SSH server only lets these accounts in: ${list('allowusers').join(', ')} (AllowUsers). Add ${ACCOUNT} there first.`;
+  if (list('allowgroups').length && !hits(list('allowgroups'))) return `The SSH server only lets these groups in: ${list('allowgroups').join(', ')} (AllowGroups). Add the group ${ACCOUNT} there first.`;
   return null;
 }
 
@@ -71,7 +72,17 @@ export const STEPS = [
       const key = await fleetKey();
       const pub = key.public.publicKey.split(' ').slice(0, 2).join(' ');
       ctx.state.connections = ctx.state.connections || {};
-      await Promise.all(ctx.hosts.map(async h => {
+      // Hosts FleetPilot manages already: log in as before, with the certificate (the password only if that fails)
+      const managed = ctx.hosts.filter(h => h.state === 'managed' && h.connection?.user);
+      if (managed.length) {
+        const r = await ctx.ansible({ hosts: managed, plays: [{ name: 'Log in as before', hosts: 'all', become: true, gather_facts: false, tasks: [{ name: 'Check the login of FleetPilot', 'ansible.builtin.ping': {} }] }] });
+        for (const h of managed) {
+          const st = r.get(h.name)?.status;
+          if (st === 'ok' || st === 'changed') { ctx.log(h.name, 'ok', `FleetPilot manages this host already: it logs in as ${h.connection.user} with a certificate.`); ctx.done(h, 'ok', `Logged in as ${h.connection.user}`); }
+          else ctx.log(h.name, 'warn', 'The login with FleetPilot\'s certificate did not work: trying the login from the vault.');
+        }
+      }
+      await Promise.all(ctx.hosts.filter(h => !ctx.finished(h)).map(async h => {
         const login = await loginOf(h);
         if (!login) { ctx.log(h.name, 'error', 'No login to connect with: choose one in the step, or keep one for this host in the vault.'); return ctx.done(h, 'failed', 'No login for this host.'); }
         const user = login.username || login.data.username;
@@ -113,23 +124,22 @@ export const STEPS = [
   },
   {
     id: 'enroll', kinds: ['takeover'], area: 'access', title: 'Make FleetPilot the manager',
-    text: 'Creates the user fleetpilot with sudo, trusts FleetPilot\'s certificates, and from then on logs in only that way.',
+    text: `Creates the account ${ACCOUNT} with sudo, trusts FleetPilot's certificates for it, and from then on logs in only that way. Stops without changing anything when that would clash with what the host has.`,
     fields: [
       F.bool('hostCert', 'Give the host a certificate (no more host key questions for anyone)', true),
       F.bool('removeBootstrap', 'Remove the key left by the first login', true)
     ],
-    describe: v => `Creates the user fleetpilot, trusts FleetPilot's certificates${v.hostCert ? ', signs the host key' : ''}, and checks the new login.`,
+    describe: v => `Creates the account ${ACCOUNT}, trusts FleetPilot's certificates${v.hostCert ? ', signs the host key' : ''}, and checks the new login.`,
     async run(ctx) {
       const [key, uca] = await Promise.all([fleetKey(), userCa()]);
-      // First look, change nothing: FleetPilot never takes over an account fleetpilot it did not make
-      // (on the FleetPilot server itself that is the account the app runs as), and never replaces
-      // certificate settings someone else made for the SSH server.
+      // First look, change nothing: FleetPilot never takes over an account svc-fleetpilot it did not
+      // make, and never replaces certificate settings someone else made for the SSH server.
       const seen = new Map();
       const looked = await ctx.ansible({
         hosts: ctx.hosts,
         plays: [{ name: 'Look before changing anything', hosts: 'all', become: true, gather_facts: false, tasks: [{
-          name: 'Read the account fleetpilot and the certificate settings of the SSH server',
-          'ansible.builtin.shell': { cmd: "getent passwd fleetpilot || true; echo ---; sshd -T 2>/dev/null | grep -Ei '^(trustedusercakeys|authorizedprincipalsfile|authorizedprincipalscommand|allowusers|allowgroups|denyusers|denygroups) ' || true" },
+          name: `Read the account ${ACCOUNT} and the certificate settings of the SSH server`,
+          'ansible.builtin.shell': { cmd: `getent passwd ${ACCOUNT} || true; echo ---; sshd -T 2>/dev/null | grep -Ei '^(trustedusercakeys|authorizedprincipalsfile|authorizedprincipalscommand|allowusers|allowgroups|denyusers|denygroups) ' || true` },
           changed_when: false
         }] }],
         onEvent: e => { if (e.event === 'result' && typeof e.stdout === 'string') seen.set(e.host, e.stdout); }
@@ -138,7 +148,7 @@ export const STEPS = [
       for (const h of ctx.hosts) {
         const res = looked.get(h.name);
         if (res?.status === 'unreachable' || res?.status === 'failed') { ctx.done(h, res.status, 'Nothing was changed.'); continue; }
-        const why = enrollProblem(seen.get(h.name));
+        const why = enrollProblem(seen.get(h.name), { moving: h.connection?.user === 'fleetpilot' });
         if (why) { refused.push(h); ctx.log(h.name, 'error', `${why} Nothing was changed for FleetPilot.`); }
       }
       if (refused.length) {
@@ -149,19 +159,21 @@ export const STEPS = [
             { name: 'Remove the key of the first login', 'ansible.builtin.lineinfile': { path: '~{{ fp_boot_user }}/.ssh/authorized_keys', regexp: 'fleetpilot-bootstrap$', state: 'absent' } }
           ] }]
         });
-        for (const h of refused) ctx.done(h, 'failed', enrollProblem(seen.get(h.name)));
+        for (const h of refused) ctx.done(h, 'failed', enrollProblem(seen.get(h.name), { moving: h.connection?.user === 'fleetpilot' }));
       }
       const go = ctx.hosts.filter(h => !ctx.finished(h));
       if (!go.length) return;
       const tasks = [
-        { name: 'Create the user fleetpilot', 'ansible.builtin.user': { name: 'fleetpilot', comment: 'FleetPilot', shell: '/bin/bash', create_home: true, password_lock: true } },
-        T.file('Make the SSH folder of fleetpilot', { path: '~fleetpilot/.ssh', state: 'directory', owner: 'fleetpilot', group: 'fleetpilot', mode: '0700' }),
-        T.copy('Let FleetPilot\'s key log in', '~fleetpilot/.ssh/authorized_keys', key.public.publicKey + '\n', { owner: 'fleetpilot', group: 'fleetpilot', mode: '0600' }),
+        { name: 'Look for FleetPilot\'s SSH setting', 'ansible.builtin.stat': { path: '/etc/ssh/sshd_config.d/10-fleetpilot.conf' }, register: 'fp_ssh_setting' },
+        { name: `Create the account ${ACCOUNT}`, 'ansible.builtin.user': { name: ACCOUNT, comment: 'FleetPilot', shell: '/bin/bash', create_home: true, password_lock: true } },
+        T.file(`Make the SSH folder of ${ACCOUNT}`, { path: `~${ACCOUNT}/.ssh`, state: 'directory', owner: ACCOUNT, group: ACCOUNT, mode: '0700' }),
+        T.copy('Let FleetPilot\'s key log in', `~${ACCOUNT}/.ssh/authorized_keys`, key.public.publicKey + '\n', { owner: ACCOUNT, group: ACCOUNT, mode: '0600' }),
         T.apt(['sudo']),
-        T.copy('Give fleetpilot sudo', '/etc/sudoers.d/fleetpilot', conf(['fleetpilot ALL=(ALL:ALL) NOPASSWD: ALL']), { mode: '0440', validate: 'visudo -cf %s' }),
+        T.copy(`Give ${ACCOUNT} sudo`, `/etc/sudoers.d/${ACCOUNT}`, conf([`${ACCOUNT} ALL=(ALL:ALL) NOPASSWD: ALL`]), { mode: '0440', validate: 'visudo -cf %s' }),
         T.copy('Trust FleetPilot\'s user certificates', '/etc/ssh/fleetpilot_user_ca.pub', uca.public.publicKey + '\n'),
         T.file('Make the folder for principals', { path: '/etc/ssh/auth_principals', state: 'directory', mode: '0755' }),
-        T.copy('Let FleetPilot\'s certificates log in as fleetpilot', '/etc/ssh/auth_principals/fleetpilot', 'fleetpilot\n'),
+        T.copy(`Let FleetPilot's certificates log in as ${ACCOUNT}`, `/etc/ssh/auth_principals/${ACCOUNT}`, 'fleetpilot\n'),
+        { name: `Let ${ACCOUNT} in where FleetPilot's SSH setting names its accounts`, 'ansible.builtin.replace': { path: '/etc/ssh/sshd_config.d/10-fleetpilot.conf', regexp: '^(AllowUsers\\s(?:.*\\s)?)fleetpilot(?=\\s|$)', replace: `\\g<1>${ACCOUNT}` }, notify: 'Reload the SSH server', when: "fp_ssh_setting.stat.exists" },
         T.copy('Configure certificate logins', '/etc/ssh/sshd_config.d/09-fleetpilot.conf', conf(['TrustedUserCAKeys /etc/ssh/fleetpilot_user_ca.pub', 'AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u']), { notify: 'Reload the SSH server' }),
         ...(ctx.values.hostCert ? [{ name: 'Read the host key', 'ansible.builtin.slurp': { src: '/etc/ssh/ssh_host_ed25519_key.pub' } }] : [])
       ];
@@ -187,27 +199,36 @@ export const STEPS = [
           ], handlers: [sshReload] }]
         });
       }
-      // From now on as fleetpilot with a certificate: that is the check
+      // From now on as svc-fleetpilot with a certificate: that is the check
       const boot = { ...ctx.state.connections };
       for (const h of ok) delete ctx.state.connections?.[String(h.id)];
       ok = ok.filter(h => !ctx.failed(h));
+      // The check logs in as the new account (on hosts taken over before 1.2.0 too)
+      const before = new Map(ok.map(h => [h.id, h.connection]));
+      for (const h of ok) h.connection = { ...(h.connection || {}), user: ACCOUNT };
       const r = await ctx.ansible({
         hosts: ok,
-        plays: [{ name: 'Log in as fleetpilot', hosts: 'all', become: true, gather_facts: true, tasks: [
+        plays: [{ name: `Log in as ${ACCOUNT}`, hosts: 'all', become: true, gather_facts: true, tasks: [
           { name: 'Check the new login', 'ansible.builtin.ping': {} },
-          ...(ctx.values.removeBootstrap ? [{ name: 'Remove the key of the first login', 'ansible.builtin.lineinfile': { path: '~{{ fp_boot_user }}/.ssh/authorized_keys', regexp: 'fleetpilot-bootstrap$', state: 'absent' }, when: "fp_boot_user != 'fleetpilot'" }] : [])
+          // An account fleetpilot that FleetPilot made before 1.2.0 goes: svc-fleetpilot replaces it. One someone else made stays.
+          { name: 'Look for the account of FleetPilot before 1.2.0', 'ansible.builtin.shell': { cmd: 'getent passwd fleetpilot | cut -d: -f5' }, register: 'fp_old', changed_when: false, failed_when: false },
+          { name: 'Remove the account of FleetPilot before 1.2.0', 'ansible.builtin.user': { name: 'fleetpilot', state: 'absent', remove: true, force: true }, when: "fp_old.stdout == 'FleetPilot'" },
+          T.file('Remove its sudo rights', { path: '/etc/sudoers.d/fleetpilot', state: 'absent' }, { when: "fp_old.stdout == 'FleetPilot'" }),
+          T.file('Remove its certificate login', { path: '/etc/ssh/auth_principals/fleetpilot', state: 'absent' }, { when: "fp_old.stdout == 'FleetPilot'" }),
+          ...(ctx.values.removeBootstrap ? [{ name: 'Remove the key of the first login', 'ansible.builtin.lineinfile': { path: '~{{ fp_boot_user }}/.ssh/authorized_keys', regexp: 'fleetpilot-bootstrap$', state: 'absent' }, when: `fp_boot_user != '${ACCOUNT}'` }] : [])
         ] }],
-        vars: h => ({ fp_boot_user: boot[String(h.id)]?.user || 'fleetpilot' })
+        vars: h => ({ fp_boot_user: boot[String(h.id)]?.user || ACCOUNT })
       });
       for (const h of ok) {
         const res = r.get(h.name);
         if (res && (res.status === 'ok' || res.status === 'changed')) {
-          await query("update hosts set connection = $2, state = 'managed', updated_at = now() where id = $1", [h.id, JSON.stringify({ user: 'fleetpilot', method: 'certificate', since: new Date().toISOString() })]);
-          ctx.log(h.name, 'ok', 'FleetPilot manages this host now: it logs in as fleetpilot with a certificate.');
+          await query("update hosts set connection = $2, state = 'managed', updated_at = now() where id = $1", [h.id, JSON.stringify({ user: ACCOUNT, method: 'certificate', since: new Date().toISOString() })]);
+          ctx.log(h.name, 'ok', `FleetPilot manages this host now: it logs in as ${ACCOUNT} with a certificate.`);
           ctx.done(h, 'changed', 'Managed by FleetPilot');
         } else {
-          ctx.state.connections[String(h.id)] = boot[String(h.id)];
-          ctx.done(h, 'failed', 'The login as fleetpilot did not work.');
+          h.connection = before.get(h.id);
+          if (boot[String(h.id)]) ctx.state.connections[String(h.id)] = boot[String(h.id)];
+          ctx.done(h, 'failed', `The login as ${ACCOUNT} did not work.`);
         }
       }
       await ctx.save();

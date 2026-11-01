@@ -3,7 +3,7 @@
 //   single   one per host: the most specific template wins
 //   collect  rows of all templates are put together (a later row with the same key wins)
 // tasks() returns { tasks, handlers } in ansible.builtin; ctx has ports (all open ports), sshPort.
-import { T, F, conf, quote, slug } from './catalog.mjs';
+import { T, F, conf, quote, slug, FP_ACCOUNTS } from './catalog.mjs';
 
 const H = {   // handlers used by several settings
   sysctl: { 'Apply kernel settings': T.cmd('Apply kernel settings', 'sysctl --system') },
@@ -342,7 +342,7 @@ export const SETTINGS = [
         tasks: users.flatMap(u => [
           T.file(`Make the SSH folder of ${u}`, { path: `~${u}/.ssh`, state: 'directory', owner: u, group: u, mode: '0700' }),
           v.exclusive
-            ? T.copy(`Set the keys of ${u}`, `~${u}/.ssh/authorized_keys`, [...v.keys.filter(k => k.user === u).map(k => k.key), ...(u === 'fleetpilot' ? ['{{ fp_ssh_public_key }}'] : [])].join('\n') + '\n', { owner: u, group: u, mode: '0600' })
+            ? T.copy(`Set the keys of ${u}`, `~${u}/.ssh/authorized_keys`, [...v.keys.filter(k => k.user === u).map(k => k.key), ...(FP_ACCOUNTS.includes(u) ? ['{{ fp_ssh_public_key }}'] : [])].join('\n') + '\n', { owner: u, group: u, mode: '0600' })
             : T.block(`Add the keys of ${u}`, { path: `~${u}/.ssh/authorized_keys`, create: true, owner: u, group: u, mode: '0600', marker: '# {mark} FleetPilot keys', block: v.keys.filter(k => k.user === u).map(k => k.key).join('\n') })
         ])
       };
@@ -364,7 +364,7 @@ export const SETTINGS = [
       F.bool('modern', 'Only modern ciphers and key exchanges', true)
     ],
     tasks: v => {
-      const users = v.allowUsers ? [...new Set([...v.allowUsers.split(','), 'fleetpilot'])].join(' ') : '';
+      const users = v.allowUsers ? [...new Set([...v.allowUsers.split(','), '{{ fp_account }}'])].join(' ') : '';
       return {
         tasks: [T.copy('Configure the SSH server', '/etc/ssh/sshd_config.d/10-fleetpilot.conf', conf([
           `Port ${v.port}`,
@@ -431,7 +431,7 @@ export const SETTINGS = [
     tasks: v => ({
       tasks: [
         T.file('Make the folder for principals', { path: '/etc/ssh/auth_principals', state: 'directory', mode: '0755' }),
-        ...v.logins.map(l => T.copy(`Let FleetPilot users log in as ${l.local}`, `/etc/ssh/auth_principals/${l.local}`, conf([...(l.local === 'fleetpilot' ? ['fleetpilot'] : []), ...l.people.split(',').filter(Boolean).map(p => `fp-${p.trim()}`)])))
+        ...v.logins.map(l => T.copy(`Let FleetPilot users log in as ${l.local}`, `/etc/ssh/auth_principals/${l.local}`, conf([...(FP_ACCOUNTS.includes(l.local) ? ['fleetpilot'] : []), ...l.people.split(',').filter(Boolean).map(p => `fp-${p.trim()}`)])))
       ]
     }),
     summary: v => v.logins.map(l => `${l.people || 'nobody'} as ${l.local}`).join(', ') || 'Nobody'

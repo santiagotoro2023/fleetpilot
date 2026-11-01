@@ -1,6 +1,7 @@
 // FleetPilot: everything a run needs to know about a host: its groups from the site down, its
 // desired state (the templates of the site, the groups and the host, merged), the variables
 // FleetPilot fills in, the secrets its settings need, and how FleetPilot logs in.
+import { ACCOUNT } from './catalog.mjs';
 import { query } from '../core/db.mjs';
 import { mergeDefinitions, needsOf, stateHash } from './compile.mjs';
 import { derivedSalt, sha512crypt } from './crypt.mjs';
@@ -47,6 +48,7 @@ export async function hostVars(host, paths) {
   const domain = (s?.search_domains || [])[0] || '';
   const ip = addr ? addr.ip : (/^[0-9.]+$/.test(host.address) ? host.address : '');
   return {
+    fp_account: host.connection?.user || ACCOUNT,
     fp_name: host.name,
     fp_domain: domain,
     fp_fqdn: domain ? `${host.name}.${domain}` : host.name,
@@ -84,7 +86,8 @@ export async function secretVars(host, merged) {
 }
 
 /**
- * How FleetPilot logs in: as the user fleetpilot with its key and a fresh certificate, or (before
+ * How FleetPilot logs in: as its account (svc-fleetpilot; fleetpilot on hosts taken over before 1.2.0)
+ * with its key and a fresh certificate, or (before
  * the take-over finished) as the user and with the key the connect step left in run state.
  */
 export async function loginFor(host, runState = {}) {
@@ -93,7 +96,7 @@ export async function loginFor(host, runState = {}) {
   if (boot) return { user: boot.user, become: boot.become || false, becomePassword: boot.becomePassword || '', keyFile: { privateKey: key.data.privateKey } };
   const ca = await userCa();
   const certificate = await signKey({ caPrivateKey: ca.data.privateKey, publicKey: key.public.publicKey, identity: `fleetpilot-run-${host.name}`, principals: ['fleetpilot'], validity: '+3h' });
-  return { user: host.connection?.user || 'fleetpilot', become: 'sudo', keyFile: { privateKey: key.data.privateKey, certificate } };
+  return { user: host.connection?.user || ACCOUNT, become: 'sudo', keyFile: { privateKey: key.data.privateKey, certificate } };
 }
 
 /** The public keys a host must know: FleetPilot's key, its user CA, its host CA */

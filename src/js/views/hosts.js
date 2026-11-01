@@ -15,10 +15,11 @@ export async function runDialog(hostIds, { kind } = {}) {
   const hosts = (await get('/api/hosts')).filter(x => hostIds.includes(x.id));
   const managed = hosts.filter(x => x.state === 'managed' || x.state === 'unreachable').length;
   const wanted = kind || (managed === hosts.length ? 'maintain' : managed === 0 ? 'takeover' : null);
-  // The careful take-over first: it changes nothing on a host but FleetPilot's own access
-  const list = all.filter(w => w.enabled && (!wanted || w.kind === wanted) && w.builtin !== 'push').sort((a, b) => (b.builtin === 'adopt') - (a.builtin === 'adopt'));
+  // The careful take-over first for new hosts; for managed ones it renews FleetPilot's access (last in the list)
+  const list = all.filter(w => w.enabled && (!wanted || w.kind === wanted || w.builtin === 'adopt') && w.builtin !== 'push')
+    .sort((a, b) => (wanted === 'maintain' ? -1 : 1) * ((b.builtin === 'adopt') - (a.builtin === 'adopt')));
   if (!list.length) { toast('There is no workflow for these hosts yet. Make one under Automate.'); return; }
-  const wf = select(list.map(w => [w.id, `${w.name}${w.kind === 'takeover' ? ' (take-over)' : ''}`]), list[0].id);
+  const wf = select(list.map(w => [w.id, `${w.name}${w.kind === 'takeover' ? (wanted === 'maintain' ? ' (take over again: renews FleetPilot\'s access)' : ' (take-over)') : ''}`]), list[0].id);
   const info = h('div', { class: 'small muted fp-steps-preview' });
   const showSteps = () => { const w = list.find(x => x.id === wf.value); info.innerHTML = ''; info.append(h('ol', {}, w.steps.map(s => h('li', {}, s.sentence)))); };
   wf.addEventListener('change', showSteps); showSteps();
@@ -422,15 +423,15 @@ async function hostSecrets(ctx, x, body) {
   const list = await get(`/api/vault?host=${x.id}`);
   body.append(h('p', { class: 'muted fp-intro' }, 'The passwords and keys FleetPilot made for this host, and what you added. Showing a value asks for a fresh confirmation and is recorded.'));
   if (!list.length) body.append(empty('Nothing yet. A take-over or "Set new passwords" puts the passwords here.'));
-  else body.append(secretTable(ctx, list));
+  else { const { secretActions } = await import('./settings.js'); body.append(secretTable(list, s => secretActions(s, () => ctx.rerender()))); }
   if (can('vault', 'change')) body.append(h('div', { class: 'row', style: { marginTop: '10px' } }, btn('Add a secret for this host', 'plus', async () => { const { secretDialog } = await import('./settings.js'); if (await secretDialog({ scope: 'host', hostId: x.id })) ctx.rerender(); })));
 }
 
 /** A table of vault entries with "Show" (after a fresh confirmation) */
-export function secretTable(ctx, list) {
+export function secretTable(list, actions) {
   return table(['Name', 'Kind', 'User', 'Version', 'Changed', ''], list.map(s => h('tr', {},
     h('td', {}, s.name), h('td', { class: 'fp-font' }, meta.vaultKinds[s.kind] || s.kind), h('td', {}, s.username || '–'), h('td', {}, String(s.version)), h('td', { class: 'fp-font' }, when(s.rotated_at || s.updated_at)),
-    h('td', {}, can('vault', 'reveal') ? btn('Show', 'eye', () => revealSecret(s), 'ghost') : null))));
+    h('td', { class: 'fp-actions-cell' }, actions(s)))));
 }
 
 export async function revealSecret(s, version) {

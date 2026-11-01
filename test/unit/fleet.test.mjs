@@ -204,6 +204,13 @@ try {
   assert.deepEqual((await call('GET', '/api/access/users', null, 200)).find(u => u.username === 'jdoe').roles.map(r => r.name), ['Zurich web']); n++;
   await call('DELETE', `/api/access/roles/${role.id}`, null, 204);
 
+  // ------------------------------------------------------------ Deleting secrets
+  const del = await call('DELETE', `/api/vault/${login.id}`, null, 409);
+  assert.match(del.error.message, /^The workflow (Careful|Take over the lab) logs in with this login\./); n++;
+  const spare = await call('POST', '/api/vault', { kind: 'password', name: 'Spare', data: { password: 'x' } }, 201);
+  await call('DELETE', `/api/vault/${spare.id}`, null, 204);
+  await call('GET', `/api/vault/${spare.id}`, null, 404);
+
   // ------------------------------------------------------------ Overview, audit, removing
   const ov = await call('GET', '/api/overview', null, 200);
   assert.equal(ov.counts.hosts, 3); n++;

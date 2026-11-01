@@ -150,6 +150,8 @@ export default function vault(app) {
     const s = await load(ctx, ctx.params.id, 'change');
     const used = await query("select t.name from templates t join template_versions v on v.template_id = t.id and v.version = t.current_version where v.definition::text like $1", [`%"${s.id}"%`]);
     if (used.length) throw httpError(409, 'in_use', `The template ${used[0].name} uses this secret. Change the template first.`);
+    const steps = await query("select w.name from workflows w where exists (select 1 from jsonb_array_elements(w.definition->'steps') st where st->'values'->>'credential' = $1) order by w.name limit 1", [String(s.id)]);
+    if (steps.length) throw httpError(409, 'in_use', `The workflow ${steps[0].name} logs in with this login. Choose another login there first.`);
     await query('delete from secrets where id = $1', [s.id]);
     await record(ctx, 'secret.deleted', { target: { type: 'secret', id: s.id, name: s.name } });
     return null;

@@ -5,6 +5,11 @@
 import { httpError } from '../core/http.mjs';
 
 // The areas of a desired state. Each has a signal color in the web app (src/css/app.css).
+/** The account FleetPilot makes on the hosts it manages (hosts taken over before 1.2.0 keep `fleetpilot`) */
+export const ACCOUNT = 'svc-fleetpilot';
+/** Accounts that are FleetPilot's own on some host: the current one and the one of 1.0 and 1.1 */
+export const FP_ACCOUNTS = [ACCOUNT, 'fleetpilot'];
+
 export const AREAS = [
   { id: 'system', title: 'System', text: 'Name, time, language, kernel and the basics every host needs.' },
   { id: 'network', title: 'Network', text: 'Addresses, VLANs, bonds, bridges, routes and name resolution.' },

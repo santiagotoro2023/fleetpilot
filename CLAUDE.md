@@ -70,6 +70,10 @@ an APP_PACKAGE). Server profile with the library elements auth, audit, jobs, sec
   types: the most specific wins, `collect` types: rows merged by their key.
 - **Migrations:** `0001_items.sql` is the template's example table, kept because a migration is never
   removed once the blueprint recorded it; FleetPilot's tables start with `0002_fleet.sql`.
+- **FleetPilot's account on managed hosts** is `svc-fleetpilot` (`ACCOUNT` in `catalog.mjs`); hosts taken over
+  before 1.2.0 keep `fleetpilot` (`hosts.connection.user`, the variable `fp_account`) until a take-over runs
+  again, which moves them and removes the old account only if its GECOS is `FleetPilot`. The certificate
+  principal stays `fleetpilot` for both. Take-overs may run on managed hosts (they renew the access).
 - **Taking over running servers** (`adopt` workflow) must never change more than FleetPilot's own access;
   `enrollProblem()` in `steps.mjs` decides when the take-over stops instead. Proven by
   `test/unit/takeover-running.test.mjs`.

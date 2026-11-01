@@ -65,7 +65,7 @@ start when hosts are added. The built-in take-over:
 
 1. logs in with the login from the vault, becomes root, installs Python when it is missing and
    leaves FleetPilot's key;
-2. creates the user `fleetpilot` with sudo, makes the host trust FleetPilot's user certificate
+2. creates the account `svc-fleetpilot` with sudo, makes the host trust FleetPilot's user certificate
    authority, signs the host key (a host certificate) and removes the key of the first login;
 3. reads the facts of the host;
 4. sets the host name;
@@ -86,9 +86,10 @@ take-over:
 1. logs in with the login from the vault (or the login kept for that host: Hosts → the host →
    Secrets → Add a secret for this host, kind Login), becomes root and leaves FleetPilot's key;
 2. looks before it changes anything, and stops (and takes its key back) when the host has an
-   account `fleetpilot` that FleetPilot did not make (like the FleetPilot server itself) or when its
-   SSH server already trusts another certificate authority;
-3. creates the account `fleetpilot` with sudo, trusts FleetPilot's certificates for that account
+   account `svc-fleetpilot` that FleetPilot did not make, when its SSH server already trusts another
+   certificate authority, or when `AllowUsers`, `AllowGroups`, `DenyUsers` or `DenyGroups` would keep
+   that account out;
+3. creates the account `svc-fleetpilot` with sudo, trusts FleetPilot's certificates for that account
    only and gives the host a host certificate;
 4. reads the facts, and keeps the name the host calls itself (also in FleetPilot);
 5. checks the host against its desired state and lists what applying would change, without
@@ -99,9 +100,16 @@ each host's *Desired state* tab before you apply anything to it, and give server
 something their own group with templates made for them: "Debian base" turns on a firewall that only
 lets SSH in, which would cut off services like a game server or a web app.
 
-Leave the FleetPilot server itself out of take-overs: FleetPilot refuses it, because its account
-`fleetpilot` is the one the app runs as. You can still add it as a host, to keep it in the inventory
-and its address in IP management.
+The FleetPilot server itself can be taken over this way too (its own account `fleetpilot`, which the
+app runs as, is left alone). Keep it out of groups whose templates set a firewall, or allow FleetPilot's
+port (8443) there: otherwise you lock yourself out of FleetPilot.
+
+**Running it again** on a host FleetPilot manages already is safe: it logs in with FleetPilot's
+certificate (the password only if that fails) and renews FleetPilot's access. Hosts taken over before
+FleetPilot 1.2.0 have the account `fleetpilot`; running the take-over again moves them to
+`svc-fleetpilot`, puts the new name into FleetPilot's own SSH setting (`AllowUsers`), checks the new
+login, and only then removes the old account with its sudo rule. An account `fleetpilot` that someone
+else made is never removed. Until then, FleetPilot keeps logging in as `fleetpilot` on those hosts.
 
 ## 6. Describe the desired state
 

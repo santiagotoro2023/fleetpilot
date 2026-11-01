@@ -59,7 +59,7 @@ try {
   assert.equal(r1.status, 'succeeded', await why(added.run)); n++;
   const host = await call('GET', `/api/hosts/${added.added[0]}`);
   assert.equal(host.state, 'managed'); n++;
-  assert.equal(host.connection.user, 'fleetpilot'); n++;
+  assert.equal(host.connection.user, 'svc-fleetpilot'); n++;
   assert.equal(host.os, 'Debian'); n++;
   assert.match(docker('exec', name, 'cat', '/etc/ssh/sshd_config.d/10-fleetpilot.conf'), /PasswordAuthentication no/); n++;
   assert.ok(!docker('exec', name, 'cat', '/root/.ssh/authorized_keys').includes('fleetpilot-bootstrap'), 'the key of the first login is gone'); n++;

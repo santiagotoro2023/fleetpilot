@@ -158,7 +158,8 @@ async function execute(job) {
   // Hosts that cannot take part: wrong state for this kind of workflow
   for (const h of all) {
     if (h.run_status !== 'pending') continue;
-    const okState = run.kind === 'takeover' ? h.state !== 'managed' || run.params?.again : ['managed', 'unreachable'].includes(h.state);
+    // A take-over may run again on a managed host: it renews FleetPilot's access (and moves it to svc-fleetpilot)
+    const okState = run.kind === 'takeover' ? true : ['managed', 'unreachable'].includes(h.state);
     if (!okState) {
       h.run_status = 'skipped';
       await query("update run_hosts set status = 'skipped' where run_id = $1 and host_id = $2", [runId, h.id]);
