@@ -52,6 +52,11 @@ ok "the installer shows the setup code of the first administrator"
 @@END@@
 get $P / | grep '<nav class="rail"' >/dev/null || fail "the app answers over HTTPS"
 ok "the app answers over HTTPS on port $P"
+@@IF server@@
+# A change from the app's own page (Origin with the port) must pass the origin check behind nginx
+vm "curl -ks -X POST -H 'Origin: https://127.0.0.1:$P' -H 'Content-Type: application/json' -d '{}' https://127.0.0.1:$P/api/installer-origin-check" | grep -q foreign_origin && fail "a change from the app's own page passes nginx (Host with the port)"
+ok "changes from the app's own page pass nginx (Host with the port)"
+@@END@@
 get $P /site.json | grep '"version": *"' >/dev/null || fail "site.json"
 ok "site.json"
 get $P /healthz >/dev/null || fail "/healthz"

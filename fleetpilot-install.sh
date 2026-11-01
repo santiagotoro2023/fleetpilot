@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  FleetPilot 1.0.0
+#  FleetPilot 1.0.1
 #  Run every Linux host in your datacenter from one place.
 #
 #  Installs FleetPilot on Debian 12 (Bookworm) or 13 (Trixie):
@@ -52,10 +52,10 @@
 # =============================================================================
 set -euo pipefail
 
-# Made from blueprint 1.1.1 (https://github.com/santiagotoro2023/project-blueprint)
+# Made from blueprint 1.1.2 (https://github.com/santiagotoro2023/project-blueprint)
 APP_ID="fleetpilot"
 APP_NAME="FleetPilot"
-APP_VERSION="1.0.0"
+APP_VERSION="1.0.1"
 APP_PROFILE="server"
 APP_PORT="8443"
 APP_ROOT="/opt/${APP_ID}"
@@ -812,7 +812,7 @@ abbr.gl:hover, abbr.gl:focus-visible { border-bottom-color: var(--ink); outline:
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/css/lib"
   cat > "$W/css/lib/audit.css" <<'__FLEETPILOT_FILE_END__'
-/* Library element "audit" (blueprint 1.1.1): the audit log table */
+/* Library element "audit" (blueprint 1.1.2): the audit log table */
 .audit .row .input { flex: 1; max-width: 420px; }
 .audit .audit-scroll { overflow-x: auto; margin-top: 10px; }
 .audit .tbl td { vertical-align: top; }
@@ -823,7 +823,7 @@ __FLEETPILOT_FILE_END__
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/css/lib"
   cat > "$W/css/lib/auth.css" <<'__FLEETPILOT_FILE_END__'
-/* Library element "auth" (blueprint 1.1.1): sign-in pages and account views */
+/* Library element "auth" (blueprint 1.1.2): sign-in pages and account views */
 
 /* Signed out: the rail shows only the logo and the theme button */
 .auth-out .rail > a[data-nav] { display: none; }
@@ -858,7 +858,7 @@ __FLEETPILOT_FILE_END__
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/css/lib"
   cat > "$W/css/lib/stats.css" <<'__FLEETPILOT_FILE_END__'
-/* Library element "stats" (blueprint 1.1.1): big numbers with a label.
+/* Library element "stats" (blueprint 1.1.2): big numbers with a label.
    Every selector starts with .stats, every value comes from the tokens of base.css. */
 .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
 .stats > .stat-tile { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-s); padding: 10px 12px; }
@@ -6273,7 +6273,7 @@ function rowsEl(f, values, changed, ro) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/core"
   cat > "$W/js/core/api.js" <<'__FLEETPILOT_FILE_END__'
-// Calls to the API of the app server (blueprint 1.1.1).
+// Calls to the API of the app server (blueprint 1.1.2).
 //   const items = await api.get('/api/items')
 //   await api.post('/api/items', { title: 'New' })
 // Errors arrive as Error with the server's message (show it with toast(e.message)).
@@ -6379,7 +6379,7 @@ export async function unpack(code) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/core"
   cat > "$W/js/core/shell.js" <<'__FLEETPILOT_FILE_END__'
-// The app shell of every blueprint project (blueprint 1.1.1): theme switch,
+// The app shell of every blueprint project (blueprint 1.1.2): theme switch,
 // the active menu entry, the move card and the start of the hash router.
 import { toast } from './ui.js';
 import { I } from './icons.js';
@@ -6435,7 +6435,7 @@ __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/core"
   cat > "$W/js/core/site.js" <<'__FLEETPILOT_FILE_END__'
 // Facts about this installation (site.json, written by the installer, the container or
-// the app server) and moving a user's data between addresses (blueprint 1.1.1).
+// the app server) and moving a user's data between addresses (blueprint 1.1.2).
 // Browser data lives per address, so when a server gets a new main address, users take
 // their data along with one click.
 import { h, toast } from './ui.js';
@@ -6503,7 +6503,7 @@ export async function receiveMigration(code, store, route) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/core"
   cat > "$W/js/core/storage.js" <<'__FLEETPILOT_FILE_END__'
-// Storage in the browser for FleetPilot (blueprint 1.1.1).
+// Storage in the browser for FleetPilot (blueprint 1.1.2).
 // One key, fleetpilot.v1, holds everything. Its shape only ever grows: new fields get
 // defaults, nothing is renamed, so an update never loses what a user did.
 // The project describes its data (src/js/store.js): createStore() does the rest.
@@ -6690,7 +6690,7 @@ export { s };
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/lib"
   cat > "$W/js/lib/audit.js" <<'__FLEETPILOT_FILE_END__'
-// Library element "audit" (blueprint 1.1.1): the audit log as a searchable table.
+// Library element "audit" (blueprint 1.1.2): the audit log as a searchable table.
 //   import { auditView } from './lib/audit.js'
 //   auditView(container, { label: action => 'Signed in' })   label() may name the app's own actions
 import { h, toast } from '../core/ui.js';
@@ -6750,7 +6750,7 @@ export function auditView(container, { label = () => null, query = {} } = {}) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/lib"
   cat > "$W/js/lib/auth.js" <<'__FLEETPILOT_FILE_END__'
-// Library element "auth" (blueprint 1.1.1): the sign-in pages and account views.
+// Library element "auth" (blueprint 1.1.2): the sign-in pages and account views.
 //
 //   import { session, guard, accountView, usersView, policyView, confirmFresh, signOut, authError } from './lib/auth.js'
 //   await session.load()                      before startApp(): who is signed in
@@ -7229,7 +7229,7 @@ export function qrSvg(text) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/js/lib"
   cat > "$W/js/lib/stats.js" <<'__FLEETPILOT_FILE_END__'
-// Library element "stats" (blueprint 1.1.1): big numbers with a label.
+// Library element "stats" (blueprint 1.1.2): big numbers with a label.
 //   statTiles([{ value: 12, label: 'lessons done' }, { value: '1:24', label: 'best time', state: 'ok' }])
 import { h } from '../core/ui.js';
 
@@ -25287,7 +25287,7 @@ export default function workflows(app) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/config.mjs" <<'__FLEETPILOT_FILE_END__'
-// Configuration of the app server (blueprint 1.1.1): only environment variables,
+// Configuration of the app server (blueprint 1.1.2): only environment variables,
 // all named FLEETPILOT_*, the same in every deployment (installer, Docker, Kubernetes).
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25319,7 +25319,7 @@ export const config = {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/db.mjs" <<'__FLEETPILOT_FILE_END__'
-// PostgreSQL for the app server (blueprint 1.1.1).
+// PostgreSQL for the app server (blueprint 1.1.2).
 //   query(sql, params)   one statement, returns the rows
 //   tx(async c => …)     several statements in one transaction (c.query(…))
 // Migrations: server/migrations/NNNN_name.sql, applied in order at start, each in its own
@@ -25429,7 +25429,7 @@ export async function close() { await pool?.end(); pool = null; }
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/http.mjs" <<'__FLEETPILOT_FILE_END__'
-// HTTP for the app server (blueprint 1.1.1): routes for the API, the web app
+// HTTP for the app server (blueprint 1.1.2): routes for the API, the web app
 // from the web folder, /healthz and /site.json, with the same headers in every deployment.
 //
 //   app.get('/api/items', async ctx => rows)            → 200 with JSON
@@ -25561,7 +25561,7 @@ function serveFile(req, res, pathname) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/log.mjs" <<'__FLEETPILOT_FILE_END__'
-// Logs of the app server (blueprint 1.1.1): one JSON object per line on stdout,
+// Logs of the app server (blueprint 1.1.2): one JSON object per line on stdout,
 // readable by journalctl, docker logs and kubectl logs alike.
 import { config } from './config.mjs';
 
@@ -25581,7 +25581,7 @@ export const log = {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/core"
   cat > "$W/server/core/server.mjs" <<'__FLEETPILOT_FILE_END__'
-// Start of the app server (blueprint 1.1.1): database, migrations, routes, HTTP,
+// Start of the app server (blueprint 1.1.2): database, migrations, routes, HTTP,
 // and a clean stop on SIGTERM (systemd, Docker and Kubernetes all send it).
 //   start({ routes: [items, …] })   every route module is a function (app) => { app.get(…) }
 //   start({ routes, onStart, onStop })   onStart() after migrations and listening (workers of the
@@ -25848,7 +25848,7 @@ export async function runPlaybook({ plays, hosts, check = false, diff = true, si
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/lib"
   cat > "$W/server/lib/audit.mjs" <<'__FLEETPILOT_FILE_END__'
-// Library element "audit" (blueprint 1.1.1): who did what, when and from where.
+// Library element "audit" (blueprint 1.1.2): who did what, when and from where.
 //
 //   import { audit, record } from './lib/audit.mjs'
 //   await start({ routes: [auth({ onEvent: record }), audit(), items] })
@@ -25909,7 +25909,7 @@ export function audit({ can = ctx => ctx.user?.isAdmin, retentionDays = 400 } = 
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/lib"
   cat > "$W/server/lib/auth.mjs" <<'__FLEETPILOT_FILE_END__'
-// Library element "auth" (blueprint 1.1.1): sign-in and accounts.
+// Library element "auth" (blueprint 1.1.2): sign-in and accounts.
 // Passwords hashed with scrypt, sessions in PostgreSQL behind an HttpOnly cookie, a password
 // policy, two-factor sign-in with TOTP and recovery codes, lockouts and rate limits, and the
 // first administrator created with a setup code. See .blueprint/library/auth/README.md.
@@ -28256,7 +28256,7 @@ export async function assign(ip, hostId, hostname, { note = '' } = {}) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/lib"
   cat > "$W/server/lib/jobs.mjs" <<'__FLEETPILOT_FILE_END__'
-// Library element "jobs" (blueprint 1.1.1): background work in a PostgreSQL queue.
+// Library element "jobs" (blueprint 1.1.2): background work in a PostgreSQL queue.
 // Every replica runs workers; a job is taken by exactly one of them (FOR UPDATE SKIP LOCKED),
 // new jobs wake the workers at once (LISTEN/NOTIFY), a job whose worker died is taken again.
 //
@@ -29032,7 +29032,7 @@ export function defineRunJobs({ resolveTargets }) {
 __FLEETPILOT_FILE_END__
   mkdir -p "$W/server/lib"
   cat > "$W/server/lib/secrets.mjs" <<'__FLEETPILOT_FILE_END__'
-// Library element "secrets" (blueprint 1.1.1): sensitive values encrypted at rest
+// Library element "secrets" (blueprint 1.1.2): sensitive values encrypted at rest
 // with AES-256-GCM and a key that lives outside the database (spec/12-library.md, secrets).
 //
 //   import { secrets, setupSecrets } from './lib/secrets.mjs'
@@ -30834,7 +30834,8 @@ ${tls}
     location / {
         proxy_pass http://127.0.0.1:${APP_BACKEND_PORT};
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
+        # \$http_host keeps the port the browser used: the app compares it with the Origin of changes
+        proxy_set_header Host \$http_host;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header Upgrade \$http_upgrade;

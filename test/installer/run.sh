@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Blueprint 1.1.1: the installer of FleetPilot on a real Debian with systemd (in Docker).
+# Blueprint 1.1.2: the installer of FleetPilot on a real Debian with systemd (in Docker).
 #   bash build.sh && bash test/installer/run.sh [debian:12|debian:13] [previous-installer.sh]
 # Installs, checks HTTPS and the app, installs again (settings and certificate are kept),
 # changes options,
@@ -48,6 +48,9 @@ grep -A1 "create the first administrator with this setup code" /tmp/$NAME.log | 
 ok "the installer shows the setup code of the first administrator"
 get $P / | grep '<nav class="rail"' >/dev/null || fail "the app answers over HTTPS"
 ok "the app answers over HTTPS on port $P"
+# A change from the app's own page (Origin with the port) must pass the origin check behind nginx
+vm "curl -ks -X POST -H 'Origin: https://127.0.0.1:$P' -H 'Content-Type: application/json' -d '{}' https://127.0.0.1:$P/api/installer-origin-check" | grep -q foreign_origin && fail "a change from the app's own page passes nginx (Host with the port)"
+ok "changes from the app's own page pass nginx (Host with the port)"
 get $P /site.json | grep '"version": *"' >/dev/null || fail "site.json"
 ok "site.json"
 get $P /healthz >/dev/null || fail "/healthz"

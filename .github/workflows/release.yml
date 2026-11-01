@@ -1,4 +1,4 @@
-# Blueprint 1.1.1: the same pipeline in every project.
+# Blueprint 1.1.2: the same pipeline in every project.
 # Every push and pull request: blueprint check, unit and browser tests, Helm chart and
 # Kubernetes manifest, Compose, and the installer on Debian 12 and 13 (systemd).
 # Pushes to main and tags v* then publish to the GitHub Container Registry:
@@ -23,7 +23,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
       postgres:
@@ -74,7 +74,7 @@ jobs:
           ./kubeconform -strict -summary -kubernetes-version "$KUBERNETES_VERSION" deploy/kubernetes/fleetpilot.yaml
 
   compose:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +87,7 @@ jobs:
           docker compose down -v
 
   installer:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -113,7 +113,7 @@ jobs:
   image:
     if: github.event_name != 'pull_request'
     needs: [test, compose, installer]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     outputs:
       version: ${{ steps.v.outputs.version }}
@@ -150,7 +150,7 @@ jobs:
   chart:
     if: github.event_name != 'pull_request'
     needs: image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

@@ -353,7 +353,8 @@ ${tls}
     location / {
         proxy_pass http://127.0.0.1:${APP_BACKEND_PORT};
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
+        # \$http_host keeps the port the browser used: the app compares it with the Origin of changes
+        proxy_set_header Host \$http_host;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header Upgrade \$http_upgrade;

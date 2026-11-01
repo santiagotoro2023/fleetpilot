@@ -3,6 +3,19 @@
 Every version lists what changed and, under "Projects must", what a project has to do when it
 updates to it (`node .blueprint/tools/blueprint.mjs update` prints these sections).
 
+## 1.1.2
+
+- Server apps behind the installer's nginx: nginx passes the `Host` header with the port the browser
+  used (`$http_host` instead of `$host`). On any port other than 80 and 443, the app server's origin
+  check compared `192.168.1.5:8443` (the browser's `Origin`) with `192.168.1.5` and refused every
+  change ("Requests from other sites are not allowed."), the first sign-in included. The installer
+  test now sends a change with an `Origin` through nginx.
+- The workflows run on `ubuntu-24.04` instead of `ubuntu-latest`: GitHub moved `ubuntu-latest` to
+  Ubuntu 26.04, where the pinned Playwright cannot install Chromium, so every browser test failed.
+
+Projects must: nothing; update and release, and existing installations get the fixed nginx site on
+their next update (`--update`).
+
 ## 1.1.1
 
 - The installer test (`test/installer/run.sh`) no longer assumes PacketPilot's ports: it installs on

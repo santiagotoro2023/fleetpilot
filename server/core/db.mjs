@@ -1,4 +1,4 @@
-// PostgreSQL for the app server (blueprint 1.1.1).
+// PostgreSQL for the app server (blueprint 1.1.2).
 //   query(sql, params)   one statement, returns the rows
 //   tx(async c => …)     several statements in one transaction (c.query(…))
 // Migrations: server/migrations/NNNN_name.sql, applied in order at start, each in its own

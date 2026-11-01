@@ -111,7 +111,7 @@ The logo is in [`assets/logo`](assets/logo): the icon as SVG for light and dark 
 <!-- blueprint:development -->
 ## Development
 
-FleetPilot follows the [project blueprint](https://github.com/santiagotoro2023/project-blueprint) 1.1.1 (`.blueprint/`, specification in `.blueprint/spec/`): the same design, installer, deployment, tests and repository layout as every project of the family. `project.conf` holds the settings every blueprint file is made from; [DEVIATIONS.md](DEVIATIONS.md) lists where this project deliberately differs.
+FleetPilot follows the [project blueprint](https://github.com/santiagotoro2023/project-blueprint) 1.1.2 (`.blueprint/`, specification in `.blueprint/spec/`): the same design, installer, deployment, tests and repository layout as every project of the family. `project.conf` holds the settings every blueprint file is made from; [DEVIATIONS.md](DEVIATIONS.md) lists where this project deliberately differs.
 
 ```bash
 npm install                             # once: Playwright for the browser tests
